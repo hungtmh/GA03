@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+  <!-- Header -->
+  <header class="bg-white shadow-md">
+    <nav class="container mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-indigo-600">✓ TODO App</h1>
+        <div class="space-x-4">
+          <a href="/" class="text-indigo-600 font-semibold hover:text-indigo-800 transition">Home</a>
+          <a href="/todos" class="text-gray-600 hover:text-indigo-600 transition">My TODOs</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <main class="container mx-auto px-4 py-12">
+    <div class="max-w-4xl mx-auto text-center">
+      <!-- Welcome Message -->
+      <div class="bg-white rounded-2xl shadow-xl p-8 md:p-12 mb-8">
+        <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+          <%= message %>
+        </h2>
+        <p class="text-lg md:text-xl text-gray-600 mb-8">
+          Manage your tasks efficiently with our simple and elegant TODO application
+        </p>
+        <a href="/todos" 
+           class="inline-block bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-indigo-700 transform hover:scale-105 transition duration-200 shadow-lg">
+          Get Started →
+        </a>
+      </div>
+
+      <!-- Features Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+        <!-- Feature 1 -->
+        <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition">
+          <div class="text-4xl mb-4">➕</div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2">Add Tasks</h3>
+          <p class="text-gray-600">Quickly add new tasks to your TODO list</p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition">
+          <div class="text-4xl mb-4">✅</div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2">Mark Complete</h3>
+          <p class="text-gray-600">Toggle tasks as done or undone easily</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition">
+          <div class="text-4xl mb-4">🗑️</div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2">Remove Tasks</h3>
+          <p class="text-gray-600">Delete tasks you no longer need</p>
+        </div>
+      </div>
+
+      <!-- Project Info -->
+      <div class="mt-12 bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-2xl font-bold text-gray-800 mb-4">Group Assignment - GA03</h3>
+        <div class="text-left max-w-2xl mx-auto space-y-2 text-gray-700">
+          <p>✨ <strong>Features:</strong></p>
+          <ul class="list-disc list-inside ml-4 space-y-1">
+            <li>Responsive layout with Tailwind CSS</li>
+            <li>Homepage and TODO list page (SSR with EJS)</li>
+            <li>Add new tasks</li>
+            <li>Mark/Unmark tasks as done</li>
+            <li>Remove tasks</li>
+            <li>Vanilla JavaScript (no frameworks)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white mt-12 py-6 shadow-inner">
+    <div class="container mx-auto px-4 text-center text-gray-600">
+      <p>© 2025 TODO App - GA03 Assignment</p>
+      <p class="text-sm mt-2">Built with Express.js, EJS, Tailwind CSS & Vanilla JavaScript</p>
+    </div>
+  </footer>
+</body>
+
+</html>
