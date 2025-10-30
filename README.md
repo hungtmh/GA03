@@ -192,38 +192,3 @@ Hiện tại ứng dụng sử dụng **in-memory storage** (lưu trong RAM). D�
 |--------|-------|
 | `npm start` | Chạy server ở production mode |
 | `npm run dev` | Chạy server ở development mode với nodemon |
-
-## 🤝 Đóng góp
-
-Đây là dự án bài tập nhóm GA03. Contributions được chào đón!
-
-1. Fork repository
-2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Mở Pull Request
-
-## 📄 License
-
-Dự án này được phân phối dưới ISC License. Xem file [LICENSE](LICENSE) để biết thêm chi tiết.
-
-## 👥 Tác giả
-
-**Group Assignment GA03**
-
-## 🙏 Acknowledgments
-
-- [Express.js Documentation](https://expressjs.com/)
-- [Tailwind CSS Documentation](https://tailwindcss.com/)
-- [EJS Documentation](https://ejs.co/)
-- [MDN Web Docs](https://developer.mozilla.org/)
-
-## 📞 Liên hệ
-
-Nếu bạn có câu hỏi hoặc góp ý, vui lòng tạo issue trên GitHub repository.
-
----
-
-⭐ **Star** repository này nếu bạn thấy hữu ích!
-
-Made with ❤️ by GA03 Team
