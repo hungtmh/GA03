@@ -375,7 +375,7 @@ class TodoApp {
                     </p>` : ''}
 
                 </div>
-                <div class="text-xs font-semibold ${task.completed ? 'text-gray-400' : 'text-gray-600'} mt-1">${task.priority}</div>
+                <div class="text-xs font-semibold ${task.completed ? 'text-gray-400' : 'text-gray-600'} mt-1">${task.priority || 'NORMAL'}</div>
                 <button 
                     class="edit-btn text-blue-500 hover:text-blue-700 p-2 rounded-lg hover:bg-blue-50 transition opacity-0 group-hover:opacity-100"
                     aria-label="Edit task"
