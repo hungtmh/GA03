@@ -10,6 +10,7 @@ class TodoApp {
     init() {
         // Get DOM elements
         this.taskInput = document.getElementById('taskInput');
+        this.taskDeadline = document.getElementById('taskDeadline');
         this.addTaskBtn = document.getElementById('addTaskBtn');
         this.tasksList = document.getElementById('tasksList');
         this.emptyState = document.getElementById('emptyState');
@@ -18,6 +19,8 @@ class TodoApp {
         this.totalCount = document.getElementById('totalCount');
         this.completedCount = document.getElementById('completedCount');
         this.activeCount = document.getElementById('activeCount');
+        this.prioritySelect = document.getElementById('prioritySelect');
+        this.sortSelect = document.getElementById('sortSelect');
 
         // Event listeners
         this.addTaskBtn.addEventListener('click', () => this.addTask());
@@ -29,6 +32,7 @@ class TodoApp {
         this.filterBtns.forEach(btn => {
             btn.addEventListener('click', (e) => this.setFilter(e.target.dataset.filter));
         });
+        this.sortSelect.addEventListener('change', (e) => this.sortTasks(e.target.value));
 
         // Initial render
         this.render();
@@ -36,7 +40,9 @@ class TodoApp {
 
     addTask() {
         const taskText = this.taskInput.value.trim();
-        
+        const deadline = this.taskDeadline.value;
+        const priority = this.prioritySelect.value;
+
         if (taskText === '') {
             this.showAlert('Please enter a task!');
             return;
@@ -45,13 +51,17 @@ class TodoApp {
         const task = {
             id: Date.now(),
             text: taskText,
+            deadline: deadline || null,
             completed: false,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            priority: priority,
         };
 
         this.tasks.unshift(task);
         this.saveTasks();
         this.taskInput.value = '';
+        this.taskDeadline.value = '';
+        this.prioritySelect.value = 'NORMAL'; // Reset priority to default
         this.render();
         this.showAlert('Task added successfully!', 'success');
     }
@@ -90,6 +100,34 @@ class TodoApp {
         }
     }
 
+    getPriorityLevel(priority) {
+        switch (priority?.toLowerCase()) {
+            case 'high': return 3;
+            case 'normal': return 2;
+            case 'low': return 1;
+            default: return 0;
+        }
+    }
+
+    sortTasks(sort) {
+        switch (sort) {
+            case 'createdAtDesc':
+                this.tasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                break;
+            case 'createdAtAsc':
+                this.tasks.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                break;
+            case 'priorityDesc':
+                this.tasks.sort((a, b) => this.getPriorityLevel(b.priority) - this.getPriorityLevel(a.priority));
+                break;
+            case 'priorityAsc':
+                this.tasks.sort((a, b) => this.getPriorityLevel(a.priority) - this.getPriorityLevel(b.priority));
+                break;
+        }
+        this.saveTasks();
+        this.render();
+    }
+
     setFilter(filter) {
         this.currentFilter = filter;
         this.filterBtns.forEach(btn => {
@@ -118,7 +156,11 @@ class TodoApp {
     }
 
     render() {
-        const filteredTasks = this.getFilteredTasks();
+        const filteredTasks = this.getFilteredTasks().sort((a, b) => {
+            if (!a.deadline) return 1;
+            if (!b.deadline) return -1;
+            return new Date(a.deadline) - new Date(b.deadline);
+        });
         
         // Update statistics
         this.totalCount.textContent = this.tasks.length;
@@ -158,9 +200,35 @@ class TodoApp {
         });
     }
 
+    getPriorityClass(priority) {
+        switch (priority) {
+            case 'HIGH':
+                return 'bg-red-50 text-red-600';
+            case 'NORMAL':
+                return 'bg-blue-50 text-blue-600';
+            case 'LOW':
+                return 'bg-green-50 text-green-600';
+            default:
+                return '';
+        }
+    }
+
     createTaskHTML(task) {
+        const today = new Date();
+        const deadlineDate = task.deadline ? new Date(task.deadline) : null;
+        const isOverdue = deadlineDate && deadlineDate < today && !task.completed;
+
+        let deadlineColorClass = "";
+        if (task.completed) {
+            deadlineColorClass = "text-green-600";
+        } else if (isOverdue) {
+            deadlineColorClass = "text-red-600";
+        } else {
+            deadlineColorClass = "text-yellow-600";
+        }
+
         return `
-            <div class="task-item bg-gray-50 rounded-lg p-4 flex items-center gap-3 hover:bg-gray-100 transition group" data-task-id="${task.id}">
+            <div class="task-item ${this.getPriorityClass(task.priority)} rounded-lg p-4 flex items-center gap-3 hover:bg-gray-100 transition group" data-task-id="${task.id}">
                 <input 
                     type="checkbox" 
                     class="task-checkbox w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500 cursor-pointer"
@@ -169,7 +237,13 @@ class TodoApp {
                 <div class="flex-1 ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}">
                     <p class="text-sm sm:text-base break-words">${this.escapeHTML(task.text)}</p>
                     <p class="text-xs text-gray-400 mt-1">${this.formatDate(task.createdAt)}</p>
+
+                    ${task.deadline ? `<p class="text-xs mt-1 ${deadlineColorClass}
+                        ">Deadline: ${new Date(task.deadline).toLocaleDateString()}
+                    </p>` : ''}
+
                 </div>
+                <div class="text-xs text-gray-400 mt-1">${task.priority}</div>
                 <button 
                     class="delete-btn text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
                     aria-label="Delete task"
