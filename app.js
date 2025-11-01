@@ -10,6 +10,7 @@ class TodoApp {
     init() {
         // Get DOM elements
         this.taskInput = document.getElementById('taskInput');
+        this.taskDeadline = document.getElementById('taskDeadline');
         this.addTaskBtn = document.getElementById('addTaskBtn');
         this.tasksList = document.getElementById('tasksList');
         this.emptyState = document.getElementById('emptyState');
@@ -39,6 +40,7 @@ class TodoApp {
 
     addTask() {
         const taskText = this.taskInput.value.trim();
+        const deadline = this.taskDeadline.value;
         const priority = this.prioritySelect.value;
 
         if (taskText === '') {
@@ -49,6 +51,7 @@ class TodoApp {
         const task = {
             id: Date.now(),
             text: taskText,
+            deadline: deadline || null,
             completed: false,
             createdAt: new Date().toISOString(),
             priority: priority,
@@ -57,6 +60,8 @@ class TodoApp {
         this.tasks.unshift(task);
         this.saveTasks();
         this.taskInput.value = '';
+        this.taskDeadline.value = '';
+        this.prioritySelect.value = 'NORMAL'; // Reset priority to default
         this.render();
         this.showAlert('Task added successfully!', 'success');
     }
@@ -96,13 +101,13 @@ class TodoApp {
     }
 
     getPriorityLevel(priority) {
-    switch (priority?.toLowerCase()) {
-        case 'high': return 3;
-        case 'normal': return 2;
-        case 'low': return 1;
-        default: return 0;
+        switch (priority?.toLowerCase()) {
+            case 'high': return 3;
+            case 'normal': return 2;
+            case 'low': return 1;
+            default: return 0;
+        }
     }
-}
 
     sortTasks(sort) {
         switch (sort) {
@@ -151,7 +156,11 @@ class TodoApp {
     }
 
     render() {
-        const filteredTasks = this.getFilteredTasks();
+        const filteredTasks = this.getFilteredTasks().sort((a, b) => {
+            if (!a.deadline) return 1;
+            if (!b.deadline) return -1;
+            return new Date(a.deadline) - new Date(b.deadline);
+        });
         
         // Update statistics
         this.totalCount.textContent = this.tasks.length;
@@ -205,6 +214,19 @@ class TodoApp {
     }
 
     createTaskHTML(task) {
+        const today = new Date();
+        const deadlineDate = task.deadline ? new Date(task.deadline) : null;
+        const isOverdue = deadlineDate && deadlineDate < today && !task.completed;
+
+        let deadlineColorClass = "";
+        if (task.completed) {
+            deadlineColorClass = "text-green-600";
+        } else if (isOverdue) {
+            deadlineColorClass = "text-red-600";
+        } else {
+            deadlineColorClass = "text-yellow-600";
+        }
+
         return `
             <div class="task-item ${this.getPriorityClass(task.priority)} rounded-lg p-4 flex items-center gap-3 hover:bg-gray-100 transition group" data-task-id="${task.id}">
                 <input 
@@ -215,6 +237,11 @@ class TodoApp {
                 <div class="flex-1 ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}">
                     <p class="text-sm sm:text-base break-words">${this.escapeHTML(task.text)}</p>
                     <p class="text-xs text-gray-400 mt-1">${this.formatDate(task.createdAt)}</p>
+
+                    ${task.deadline ? `<p class="text-xs mt-1 ${deadlineColorClass}
+                        ">Deadline: ${new Date(task.deadline).toLocaleDateString()}
+                    </p>` : ''}
+
                 </div>
                 <div class="text-xs text-gray-400 mt-1">${task.priority}</div>
                 <button 
