@@ -21,6 +21,19 @@ class TodoApp {
         this.activeCount = document.getElementById('activeCount');
         this.prioritySelect = document.getElementById('prioritySelect');
         this.sortSelect = document.getElementById('sortSelect');
+        
+        // Modal elements
+        this.modal = document.getElementById('universalModal');
+        this.modalIcon = document.getElementById('modalIcon');
+        this.modalIconClass = document.getElementById('modalIconClass');
+        this.modalTitle = document.getElementById('modalTitle');
+        this.modalMessage = document.getElementById('modalMessage');
+        this.modalConfirmBtn = document.getElementById('modalConfirmBtn');
+        this.modalCancelBtn = document.getElementById('modalCancelBtn');
+        this.editForm = document.getElementById('editForm');
+        this.modalEditInput = document.getElementById('modalEditInput');
+        this.modalEditDeadline = document.getElementById('modalEditDeadline');
+        this.modalEditPriority = document.getElementById('modalEditPriority');
 
         // Event listeners
         this.addTaskBtn.addEventListener('click', () => this.addTask());
@@ -33,9 +46,94 @@ class TodoApp {
             btn.addEventListener('click', (e) => this.setFilter(e.target.dataset.filter));
         });
         this.sortSelect.addEventListener('change', (e) => this.sortTasks(e.target.value));
+        
+        // Modal event listeners
+        this.modalCancelBtn.addEventListener('click', () => this.closeModal());
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.closeModal();
+        });
 
         // Initial render
         this.render();
+    }
+
+    showModal(type, data = {}) {
+        this.modal.classList.remove('hidden');
+        this.editForm.classList.add('hidden');
+        
+        // Reset modal callback
+        this.modalCallback = null;
+        
+        switch(type) {
+            case 'edit':
+                this.modalIcon.className = 'w-12 h-12 rounded-full flex items-center justify-center bg-blue-100';
+                this.modalIconClass.className = 'fas fa-edit text-2xl text-blue-600';
+                this.modalTitle.textContent = 'Edit Task';
+                this.modalMessage.textContent = 'Update your task details below:';
+                this.modalConfirmBtn.className = 'flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition';
+                this.modalConfirmBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Changes';
+                
+                // Show edit form
+                this.editForm.classList.remove('hidden');
+                this.modalEditInput.value = data.text || '';
+                this.modalEditDeadline.value = data.deadline || '';
+                this.modalEditPriority.value = data.priority || 'NORMAL';
+                
+                setTimeout(() => this.modalEditInput.focus(), 100);
+                
+                this.modalCallback = () => {
+                    const newText = this.modalEditInput.value.trim();
+                    if (newText === '') {
+                        this.showAlert('Task text cannot be empty!');
+                        return false;
+                    }
+                    return {
+                        text: newText,
+                        deadline: this.modalEditDeadline.value || null,
+                        priority: this.modalEditPriority.value
+                    };
+                };
+                break;
+                
+            case 'delete':
+                this.modalIcon.className = 'w-12 h-12 rounded-full flex items-center justify-center bg-red-100';
+                this.modalIconClass.className = 'fas fa-trash-alt text-2xl text-red-600';
+                this.modalTitle.textContent = 'Delete Task';
+                this.modalMessage.textContent = 'Are you sure you want to delete this task? This action cannot be undone.';
+                this.modalConfirmBtn.className = 'flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition';
+                this.modalConfirmBtn.innerHTML = '<i class="fas fa-trash mr-2"></i>Delete';
+                this.modalCallback = () => true;
+                break;
+                
+            case 'clearCompleted':
+                this.modalIcon.className = 'w-12 h-12 rounded-full flex items-center justify-center bg-orange-100';
+                this.modalIconClass.className = 'fas fa-broom text-2xl text-orange-600';
+                this.modalTitle.textContent = 'Clear Completed Tasks';
+                this.modalMessage.textContent = `Are you sure you want to delete ${data.count} completed task(s)? This action cannot be undone.`;
+                this.modalConfirmBtn.className = 'flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold transition';
+                this.modalConfirmBtn.innerHTML = '<i class="fas fa-trash mr-2"></i>Clear All';
+                this.modalCallback = () => true;
+                break;
+        }
+        
+        // Return promise for confirmation
+        return new Promise((resolve) => {
+            const confirmHandler = () => {
+                const result = this.modalCallback ? this.modalCallback() : true;
+                if (result !== false) {
+                    this.closeModal();
+                    resolve(result);
+                }
+                this.modalConfirmBtn.removeEventListener('click', confirmHandler);
+            };
+            
+            this.modalConfirmBtn.addEventListener('click', confirmHandler);
+        });
+    }
+
+    closeModal() {
+        this.modal.classList.add('hidden');
+        this.editForm.classList.add('hidden');
     }
 
     addTask() {
@@ -75,13 +173,35 @@ class TodoApp {
         }
     }
 
+    editTask(id) {
+        const task = this.tasks.find(t => t.id === id);
+        if (!task) return;
+
+        this.showModal('edit', {
+            text: task.text,
+            deadline: task.deadline,
+            priority: task.priority
+        }).then((result) => {
+            if (result) {
+                task.text = result.text;
+                task.deadline = result.deadline;
+                task.priority = result.priority;
+                this.saveTasks();
+                this.render();
+                this.showAlert('Task updated successfully!', 'success');
+            }
+        });
+    }
+
     removeTask(id) {
-        if (confirm('Are you sure you want to delete this task?')) {
-            this.tasks = this.tasks.filter(t => t.id !== id);
-            this.saveTasks();
-            this.render();
-            this.showAlert('Task removed successfully!', 'success');
-        }
+        this.showModal('delete').then((confirmed) => {
+            if (confirmed) {
+                this.tasks = this.tasks.filter(t => t.id !== id);
+                this.saveTasks();
+                this.render();
+                this.showAlert('Task deleted successfully!', 'success');
+            }
+        });
     }
 
     clearCompleted() {
@@ -92,12 +212,14 @@ class TodoApp {
             return;
         }
 
-        if (confirm(`Delete ${completedTasks} completed task(s)?`)) {
-            this.tasks = this.tasks.filter(t => !t.completed);
-            this.saveTasks();
-            this.render();
-            this.showAlert('Completed tasks cleared!', 'success');
-        }
+        this.showModal('clearCompleted', { count: completedTasks }).then((confirmed) => {
+            if (confirmed) {
+                this.tasks = this.tasks.filter(t => !t.completed);
+                this.saveTasks();
+                this.render();
+                this.showAlert('Completed tasks cleared!', 'success');
+            }
+        });
     }
 
     getPriorityLevel(priority) {
@@ -193,9 +315,19 @@ class TodoApp {
             if (taskElement) {
                 const checkbox = taskElement.querySelector('.task-checkbox');
                 const deleteBtn = taskElement.querySelector('.delete-btn');
+                const editBtn = taskElement.querySelector('.edit-btn');
+                const taskContent = taskElement.querySelector('.task-content');
                 
                 checkbox.addEventListener('change', () => this.toggleTask(task.id));
                 deleteBtn.addEventListener('click', () => this.removeTask(task.id));
+                editBtn.addEventListener('click', () => this.editTask(task.id));
+                
+                // Double-click to edit
+                taskContent.addEventListener('dblclick', () => {
+                    if (!task.completed) {
+                        this.editTask(task.id);
+                    }
+                });
             }
         });
     }
@@ -234,7 +366,7 @@ class TodoApp {
                     class="task-checkbox w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                     ${task.completed ? 'checked' : ''}
                 >
-                <div class="flex-1 ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}">
+                <div class="task-content flex-1 ${task.completed ? 'line-through text-gray-400' : 'text-gray-800 cursor-pointer'}" title="${task.completed ? '' : 'Double-click to edit'}">
                     <p class="text-sm sm:text-base break-words">${this.escapeHTML(task.text)}</p>
                     <p class="text-xs text-gray-400 mt-1">${this.formatDate(task.createdAt)}</p>
 
@@ -243,10 +375,18 @@ class TodoApp {
                     </p>` : ''}
 
                 </div>
-                <div class="text-xs text-gray-400 mt-1">${task.priority}</div>
+                <div class="text-xs font-semibold ${task.completed ? 'text-gray-400' : 'text-gray-600'} mt-1">${task.priority}</div>
+                <button 
+                    class="edit-btn text-blue-500 hover:text-blue-700 p-2 rounded-lg hover:bg-blue-50 transition opacity-0 group-hover:opacity-100"
+                    aria-label="Edit task"
+                    title="Edit task"
+                >
+                    <i class="fas fa-edit"></i>
+                </button>
                 <button 
                     class="delete-btn text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
                     aria-label="Delete task"
+                    title="Delete task"
                 >
                     <i class="fas fa-trash-alt"></i>
                 </button>
