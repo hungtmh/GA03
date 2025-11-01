@@ -10,6 +10,7 @@ class TodoApp {
     init() {
         // Get DOM elements
         this.taskInput = document.getElementById('taskInput');
+        this.taskDeadline = document.getElementById('taskDeadline');
         this.addTaskBtn = document.getElementById('addTaskBtn');
         this.tasksList = document.getElementById('tasksList');
         this.emptyState = document.getElementById('emptyState');
@@ -18,7 +19,7 @@ class TodoApp {
         this.totalCount = document.getElementById('totalCount');
         this.completedCount = document.getElementById('completedCount');
         this.activeCount = document.getElementById('activeCount');
-
+        
         // Event listeners
         this.addTaskBtn.addEventListener('click', () => this.addTask());
         this.taskInput.addEventListener('keypress', (e) => {
@@ -36,6 +37,7 @@ class TodoApp {
 
     addTask() {
         const taskText = this.taskInput.value.trim();
+        const deadline = this.taskDeadline.value;
         
         if (taskText === '') {
             this.showAlert('Please enter a task!');
@@ -45,6 +47,7 @@ class TodoApp {
         const task = {
             id: Date.now(),
             text: taskText,
+            deadline: deadline || null,
             completed: false,
             createdAt: new Date().toISOString()
         };
@@ -52,6 +55,7 @@ class TodoApp {
         this.tasks.unshift(task);
         this.saveTasks();
         this.taskInput.value = '';
+        this.taskDeadline.value = '';
         this.render();
         this.showAlert('Task added successfully!', 'success');
     }
@@ -118,7 +122,11 @@ class TodoApp {
     }
 
     render() {
-        const filteredTasks = this.getFilteredTasks();
+        const filteredTasks = this.getFilteredTasks().sort((a, b) => {
+            if (!a.deadline) return 1;
+            if (!b.deadline) return -1;
+            return new Date(a.deadline) - new Date(b.deadline);
+        });
         
         // Update statistics
         this.totalCount.textContent = this.tasks.length;
@@ -159,6 +167,19 @@ class TodoApp {
     }
 
     createTaskHTML(task) {
+        const today = new Date();
+        const deadlineDate = task.deadline ? new Date(task.deadline) : null;
+        const isOverdue = deadlineDate && deadlineDate < today && !task.completed;
+
+        let deadlineColorClass = "";
+        if (task.completed) {
+            deadlineColorClass = "text-green-600";
+        } else if (isOverdue) {
+            deadlineColorClass = "text-red-600";
+        } else {
+            deadlineColorClass = "text-yellow-600";
+        }
+
         return `
             <div class="task-item bg-gray-50 rounded-lg p-4 flex items-center gap-3 hover:bg-gray-100 transition group" data-task-id="${task.id}">
                 <input 
@@ -169,6 +190,11 @@ class TodoApp {
                 <div class="flex-1 ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}">
                     <p class="text-sm sm:text-base break-words">${this.escapeHTML(task.text)}</p>
                     <p class="text-xs text-gray-400 mt-1">${this.formatDate(task.createdAt)}</p>
+
+                    ${task.deadline ? `<p class="text-xs mt-1 ${deadlineColorClass}
+                        ">Deadline: ${new Date(task.deadline).toLocaleDateString()}
+                    </p>` : ''}
+
                 </div>
                 <button 
                     class="delete-btn text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
