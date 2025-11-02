@@ -1,110 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TODO App - Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  </head>
+  <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <!-- Navigation -->
     <nav class="bg-white shadow-lg">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-4">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-tasks text-indigo-600 text-2xl"></i>
-                    <h1 class="text-2xl font-bold text-gray-800">TODO App</h1>
-                </div>
-                <div class="space-x-4">
-                    <a href="index.html" class="text-indigo-600 font-semibold hover:text-indigo-800 transition">Home</a>
-                    <a href="todo.html" class="text-gray-600 hover:text-indigo-600 transition">My Tasks</a>
-                </div>
-            </div>
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+          <div class="flex items-center space-x-2">
+            <i class="fas fa-tasks text-indigo-600 text-2xl"></i>
+            <h1 class="text-2xl font-bold text-gray-800">TODO App</h1>
+          </div>
+          <div class="space-x-4">
+            <a href="index.html" class="text-indigo-600 font-semibold hover:text-indigo-800 transition">Home</a>
+            <a href="todo.html" class="text-gray-600 hover:text-indigo-600 transition">My Tasks</a>
+          </div>
         </div>
+      </div>
     </nav>
 
     <!-- Hero Section -->
     <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="max-w-4xl mx-auto">
-            <!-- Welcome Card -->
-            <div class="bg-white rounded-lg shadow-xl p-8 sm:p-12 mb-8">
-                <div class="text-center">
-                    <div class="mb-6">
-                        <i class="fas fa-clipboard-list text-indigo-600 text-6xl sm:text-7xl"></i>
-                    </div>
-                    <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Welcome to Your TODO App</h2>
-                    <p class="text-gray-600 text-lg mb-8">Organize your tasks efficiently and boost your productivity</p>
-                    <a href="todo.html" class="inline-block bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                        Get Started <i class="fas fa-arrow-right ml-2"></i>
-                    </a>
-                </div>
+      <div class="max-w-4xl mx-auto">
+        <!-- Welcome Card -->
+        <div class="bg-white rounded-lg shadow-xl p-8 sm:p-12 mb-8">
+          <div class="text-center">
+            <div class="mb-6">
+              <i class="fas fa-clipboard-list text-indigo-600 text-6xl sm:text-7xl"></i>
             </div>
-
-            <!-- Features Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Feature 1 -->
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
-                    <div class="text-indigo-600 text-4xl mb-4">
-                        <i class="fas fa-plus-circle"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Add Tasks</h3>
-                    <p class="text-gray-600">Quickly add new tasks to your TODO list</p>
-                </div>
-
-                <!-- Feature 2 -->
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
-                    <div class="text-green-600 text-4xl mb-4">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Mark as Done</h3>
-                    <p class="text-gray-600">Track your progress by marking completed tasks</p>
-                </div>
-
-                <!-- Feature 3 -->
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
-                    <div class="text-red-600 text-4xl mb-4">
-                        <i class="fas fa-trash-alt"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Remove Tasks</h3>
-                    <p class="text-gray-600">Delete tasks you no longer need</p>
-                </div>
-
-                <!-- Feature 4 -->
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
-                    <div class="text-purple-600 text-4xl mb-4">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Responsive Design</h3>
-                    <p class="text-gray-600">Works seamlessly on all devices</p>
-                </div>
-
-                <!-- Feature 5 -->
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
-                    <div class="text-yellow-600 text-4xl mb-4">
-                        <i class="fas fa-save"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Auto Save</h3>
-                    <p class="text-gray-600">Your tasks are saved automatically</p>
-                </div>
-
-                <!-- Feature 6 -->
-                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
-                    <div class="text-pink-600 text-4xl mb-4">
-                        <i class="fas fa-filter"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Filter Tasks</h3>
-                    <p class="text-gray-600">View all, active, or completed tasks</p>
-                </div>
-            </div>
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Welcome to Your TODO App</h2>
+            <p class="text-gray-600 text-lg mb-8">Organize your tasks efficiently and boost your productivity</p>
+            <a href="todo.html" class="inline-block bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-lg hover:shadow-xl transform hover:-translate-y-1"> Get Started <i class="fas fa-arrow-right ml-2"></i> </a>
+          </div>
         </div>
+
+        <!-- Features Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Feature 1 -->
+          <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
+            <div class="text-indigo-600 text-4xl mb-4">
+              <i class="fas fa-plus-circle"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Add Tasks</h3>
+            <p class="text-gray-600">Quickly add new tasks to your TODO list</p>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
+            <div class="text-green-600 text-4xl mb-4">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Mark as Done</h3>
+            <p class="text-gray-600">Track your progress by marking completed tasks</p>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
+            <div class="text-red-600 text-4xl mb-4">
+              <i class="fas fa-trash-alt"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Remove Tasks</h3>
+            <p class="text-gray-600">Delete tasks you no longer need</p>
+          </div>
+
+          <!-- Feature 4 -->
+          <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
+            <div class="text-purple-600 text-4xl mb-4">
+              <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Responsive Design</h3>
+            <p class="text-gray-600">Works seamlessly on all devices</p>
+          </div>
+
+          <!-- Feature 5 -->
+          <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
+            <div class="text-yellow-600 text-4xl mb-4">
+              <i class="fas fa-save"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Auto Save</h3>
+            <p class="text-gray-600">Your tasks are saved automatically</p>
+          </div>
+
+          <!-- Feature 6 -->
+          <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
+            <div class="text-pink-600 text-4xl mb-4">
+              <i class="fas fa-filter"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Filter Tasks</h3>
+            <p class="text-gray-600">View all, active, or completed tasks</p>
+          </div>
+        </div>
+      </div>
     </main>
 
     <!-- Footer -->
     <footer class="bg-white shadow-lg mt-12">
-        <div class="container mx-auto px-4 py-6 text-center text-gray-600">
-            <p>&copy; 2025 TODO App - GA03 Assignment</p>
-        </div>
+      <div class="container mx-auto px-4 py-6 text-center text-gray-600">
+        <p>&copy; 2025 TayDuKy</p>
+      </div>
     </footer>
-</body>
+  </body>
 </html>
