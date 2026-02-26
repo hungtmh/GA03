@@ -1,326 +1,356 @@
-# 📱 Gallery App - Ứng dụng Quản lý Ảnh Android
+# 📋 BÁO CÁO VI PHẠM NGUYÊN LÝ THIẾT KẾ — Models & Database Layer
 
-## 📋 Tổng quan
-
-**Gallery** là một ứng dụng quản lý ảnh trên Android được phát triển bằng **Java**. Ứng dụng cho phép người dùng xem, chỉnh sửa, sắp xếp và quản lý ảnh trên thiết bị với nhiều tính năng hữu ích như album, ảnh yêu thích, thùng rác, ẩn ảnh, chỉnh sửa ảnh với filter, v.v.
-
----
-
-## 🗄️ Database
-
-### ❌ Không sử dụng Database truyền thống (SQLite/Room)
-
-Ứng dụng **KHÔNG** sử dụng database truyền thống. Thay vào đó, dữ liệu được lưu trữ bằng:
-
-### 1. **SharedPreferences** (`AppConfig.java`)
-Lưu trữ cấu hình ứng dụng:
-- `dark_mode`: Chế độ tối (boolean)
-- `trash_mode`: Chế độ thùng rác (boolean)  
-- `time_lapse`: Thời gian slideshow (String)
-
-### 2. **File System**
-- Ảnh được đọc trực tiếp từ bộ nhớ thiết bị
-- Albums được lưu dưới dạng JSON file thông qua `AlbumUtility.java`
-- Thư mục đặc biệt: `Favorite`, `Trashed`, `Hide`
-
-### 3. **JSON (Gson)**
-- Sử dụng thư viện `Gson` để serialize/deserialize dữ liệu album
-- Lưu danh sách ảnh trong mỗi album
+> **Phạm vi kiểm tra:** Tất cả file trong `src/models/*.model.js` và `src/utils/db.js`  
+> **Ngày kiểm tra:** 26/02/2026
 
 ---
 
-## 📂 Cấu trúc Project
+## Mục lục
 
-### 📁 Activities (4 Activity)
-
-| Activity | File | Mô tả |
-|----------|------|-------|
-| **MainActivity** | `MainActivity.java` (318 dòng) | Activity chính, điều hướng giữa các Fragment |
-| **LargeImage** | `LargeImage.java` (568 dòng) | Xem ảnh full-screen với zoom, swipe |
-| **EditImageActivity** | `EditImageActivity.java` (175 dòng) | Chỉnh sửa ảnh (rotate, filter, brush) |
-| **SlideShowActivity** | `SlideShowActivity.java` | Trình chiếu ảnh slideshow |
-
----
-
-### 📁 Fragments (12 Fragment)
-
-| Fragment | Mô tả |
-|----------|-------|
-| **FoldersFragment** | Hiển thị danh sách thư mục chứa ảnh |
-| **PicturesFragment** | Hiển thị grid ảnh trong thư mục/album |
-| **AlbumsFragment** | Quản lý các album tùy chỉnh |
-| **SettingsFragment** | Cài đặt ứng dụng (dark mode, trash mode, slideshow) |
-| **TrashedFragment** | Thùng rác - ảnh đã xóa tạm thời |
-| **HideFragment** | Ảnh ẩn (bảo vệ bằng mật khẩu) |
-| **HideLoginFragment** | Form đăng nhập để xem ảnh ẩn |
-| **HideCreateFragment** | Tạo mật khẩu cho ảnh ẩn |
-| **HideChangePasswordFragment** | Đổi mật khẩu ảnh ẩn |
-| **FilterFragment** | Áp dụng filter cho ảnh |
-| **BrushFragment** | Vẽ/tô màu lên ảnh |
-| **RotateFragment** | Xoay ảnh |
-| **UrlDialogFragment** | Dialog nhập URL để tải ảnh từ internet |
+1. [Tổng kết vi phạm](#1-tổng-kết-vi-phạm)
+2. [Chi tiết vi phạm theo nguyên lý](#2-chi-tiết-vi-phạm-theo-nguyên-lý)
+   - [DRY — Don't Repeat Yourself](#21-dry--dont-repeat-yourself)
+   - [SRP — Single Responsibility Principle](#22-srp--single-responsibility-principle)
+   - [OCP — Open/Closed Principle](#23-ocp--openclosed-principle)
+   - [DIP — Dependency Inversion Principle](#24-dip--dependency-inversion-principle)
+   - [KISS — Keep It Simple, Stupid](#25-kiss--keep-it-simple-stupid)
+   - [YAGNI — You Ain't Gonna Need It](#26-yagni--you-aint-gonna-need-it)
+3. [Tổng hợp thay đổi đã thực hiện](#3-tổng-hợp-thay-đổi-đã-thực-hiện)
 
 ---
 
-### 📁 Adapters (9 Adapter)
+## 1. Tổng kết vi phạm
 
-| Adapter | Mô tả |
-|---------|-------|
-| **FolderAdapter** | Adapter cho danh sách thư mục |
-| **PicturesAdapter** | Adapter grid view ảnh |
-| **PicturesListAdapter** | Adapter list view ảnh |
-| **AlbumsAdapter** | Adapter danh sách album |
-| **FilterAdapter** | Adapter cho các filter |
-| **ColorAdapter** | Adapter cho bảng màu brush |
-| **ToolAdapter** | Adapter cho công cụ chỉnh sửa |
-| **SlideShowAdapter** | Adapter cho slideshow |
-| **ViewPagerAdapter** | Adapter cho ViewPager xem ảnh lớn |
+| Nguyên lý | Số vi phạm | Mức độ | File chính bị ảnh hưởng |
+|-----------|-----------|--------|------------------------|
+| **DRY**   | 11        | 🔴 Cao | `product.model.js`, `invoice.model.js`, `order.model.js`, `review.model.js`, `autoBidding.model.js` |
+| **SRP**   | 2         | 🟡 Trung bình | `invoice.model.js`, `product.model.js` |
+| **OCP**   | 1         | 🟡 Trung bình | `product.model.js` |
+| **DIP**   | 1         | 🟡 Trung bình | `db.js` |
+| **KISS**  | 2         | 🟡 Trung bình | `product.model.js` |
+| **YAGNI** | 4         | 🟢 Thấp | `invoice.model.js`, `productComment.model.js`, `systemSetting.model.js`, `order.model.js` |
 
 ---
 
-### 📁 Helper Classes
-
-| Class | File | Mô tả |
-|-------|------|-------|
-| **HashingHelper** | `Helper/HashingHelper.java` | Mã hóa SHA-256 cho mật khẩu ảnh ẩn |
-| **SortHelper** | `Helper/SortHelper.java` | Sắp xếp file theo tên, ngày, kích thước |
+## 2. Chi tiết vi phạm theo nguyên lý
 
 ---
 
-### 📁 Utility Classes
+### 2.1 DRY — Don't Repeat Yourself
 
-| Class | Mô tả |
-|-------|-------|
-| **AppConfig** | Quản lý cấu hình app (Singleton pattern) |
-| **AlbumData** | Model cho dữ liệu album |
-| **AlbumUtility** | Utility đọc/ghi album từ file |
-| **FilterUtility** | Các filter ảnh (Grayscale, Vintage, Cream, Forest...) |
-| **Tool** | Model cho công cụ chỉnh sửa |
+#### DRY-01: Subquery `bid_count` lặp lại 15+ lần (product.model.js, autoBidding.model.js)
 
----
+**Mô tả:** Đoạn SQL đếm lượt bid được copy-paste ở khắp nơi.
 
-### 📁 Custom Views
-
-| Class | Package | Mô tả |
-|-------|---------|-------|
-| **ZoomableImageView** | `LargeImagePackage` | ImageView hỗ trợ zoom bằng gesture |
-| **ZoomableViewPager** | `LargeImagePackage` | ViewPager hỗ trợ zoom |
-| **EditImageView** | `com.example.gallery` | Custom view cho chỉnh sửa ảnh |
-
----
-
-### 📁 Interfaces (Callbacks)
-
-| Interface | Mô tả |
-|-----------|-------|
-| **MainCallbacks** | Giao tiếp Fragment ↔ MainActivity |
-| **FragmentCallbacks** | Callback chung cho Fragment |
-| **EditCallbacks** | Callback cho EditImageActivity |
-| **EditFragmentCallbacks** | Callback cho các Fragment chỉnh sửa |
-| **HideToolbarCallback** | Callback cho toolbar ảnh ẩn |
-| **TrashToolbarCallback** | Callback cho toolbar thùng rác |
-| **RecyclerClickListener** | Listener cho RecyclerView click |
-
----
-
-## 🎨 Layout Files (30 Layout)
-
-```
-📁 res/layout/
-├── activity_main.xml           # Layout chính
-├── albums_fragment.xml         # Fragment album
-├── albums_item.xml             # Item album
-├── pictures_fragment.xml       # Fragment ảnh
-├── pictures_item.xml           # Item ảnh (grid)
-├── pictures_list_item.xml      # Item ảnh (list)
-├── gallery_item.xml            # Item gallery
-├── folder_picture_fragment.xml # Fragment thư mục
-├── folder_picture_item.xml     # Item thư mục
-├── large_picture_container.xml # Container xem ảnh lớn
-├── large_picture_full.xml      # Xem ảnh toàn màn hình
-├── large_picture_bottom_nav_bar.xml
-├── edit_image_activity.xml     # Activity chỉnh sửa
-├── edit_brush_fragment.xml     # Fragment brush
-├── edit_eraser_fragment.xml    # Fragment eraser
-├── filter_image_fragment.xml   # Fragment filter
-├── filter_item.xml             # Item filter
-├── rotate_fragment.xml         # Fragment xoay
-├── color_item.xml              # Item màu
-├── tool_item.xml               # Item công cụ
-├── slideshow.xml               # Slideshow
-├── slideshow_item.xml          # Item slideshow
-├── settings_fragment.xml       # Fragment cài đặt
-├── add_album_form.xml          # Form thêm album
-├── choose_album_form.xml       # Form chọn album
-├── hide_login_form.xml         # Form đăng nhập ẩn
-├── hide_create_form.xml        # Form tạo mật khẩu
-├── hide_change_password_form.xml
-├── picture_info.xml            # Dialog thông tin ảnh
-└── url_dialog_fragment.xml     # Dialog nhập URL
+**Code vi phạm (lặp lại trong 15+ hàm):**
+```js
+db.raw(`(SELECT COUNT(*) FROM bidding_history WHERE bidding_history.product_id = products.id) AS bid_count`)
 ```
 
----
+**Xuất hiện tại:** `findAll`, `findByProductIdForAdmin`, `findPage`, `searchPageByKeywords`, `findByCategoryId`, `findByCategoryIds`, `BASE_QUERY`, `findTopBids`, `findByProductId`, `findByProductId2`, `findAllProductsBySellerId`, `findActiveProductsBySellerId`, `findPendingProductsBySellerId`, `findSoldProductsBySellerId` trong `product.model.js`, và `getBiddingProductsByBidderId`, `getWonAuctionsByBidderId` trong `autoBidding.model.js`.
 
-## ⚙️ Tính năng chính
-
-### 1. 📷 **Quản lý ảnh**
-- Xem ảnh theo thư mục
-- Xem ảnh theo album tùy chỉnh
-- Grid view / List view
-- Sắp xếp theo: Tên, Ngày, Kích thước (tăng/giảm)
-
-### 2. 🖼️ **Xem ảnh**
-- Xem ảnh full-screen
-- Zoom in/out bằng gesture
-- Swipe để chuyển ảnh
-- Xem thông tin ảnh (tên, kích thước, ngày...)
-
-### 3. ✏️ **Chỉnh sửa ảnh**
-- **Rotate**: Xoay ảnh 90°
-- **Filter**: 10 filter (Grayscale, Vintage, Cream, Forest, Cozy, Blossom, Evergreen, Auto, Sharpen, No Effect)
-- **Brush**: Vẽ lên ảnh với nhiều màu sắc
-
-### 4. 📁 **Album**
-- Tạo album mới
-- Thêm ảnh vào album
-- Xóa album
-- Album mặc định: Favorite, Trashed, Hide
-
-### 5. ⭐ **Yêu thích**
-- Đánh dấu ảnh yêu thích
-- Xem danh sách ảnh yêu thích
-
-### 6. 🗑️ **Thùng rác**
-- Xóa ảnh vào thùng rác (không xóa vĩnh viễn)
-- Khôi phục ảnh từ thùng rác
-- Xóa vĩnh viễn
-
-### 7. 🔒 **Ảnh ẩn**
-- Bảo vệ ảnh bằng mật khẩu
-- Mã hóa mật khẩu bằng SHA-256
-- Đổi mật khẩu
-
-### 8. 🎬 **Slideshow**
-- Trình chiếu ảnh tự động
-- Tùy chỉnh thời gian chuyển ảnh
-
-### 9. 🌐 **Tải ảnh từ URL**
-- Nhập URL để tải ảnh từ internet
-- Kiểm tra kết nối mạng
-
-### 10. 🎨 **Giao diện**
-- Dark mode / Light mode
-- Material Design
-- Bottom Navigation
-
-### 11. 📤 **Chia sẻ**
-- Chia sẻ ảnh qua các ứng dụng khác
-- Đặt làm hình nền
+**Cách sửa:** Trích xuất thành hàm helper `bidCountSubquery()`.
 
 ---
 
-## 📦 Thư viện sử dụng
+#### DRY-02: `mask_name_alternating` lặp lại 8+ lần (product.model.js)
 
-```gradle
-dependencies {
-    // Gson - JSON parsing
-    implementation 'com.google.code.gson:gson:2.8.9'
-    
-    // Glide - Image loading
-    implementation 'com.github.bumptech.glide:glide:4.12.0'
-    
-    // AndroidX
-    implementation 'androidx.appcompat:appcompat:1.4.0'
-    implementation 'com.google.android.material:material:1.4.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.2'
-    
-    // Blurry - Blur effect
-    implementation 'jp.wasabeef:blurry:4.0.0'
+**Mô tả:** Hàm che tên bidder được copy-paste nhiều lần.
+
+**Code vi phạm:**
+```js
+db.raw(`mask_name_alternating(users.fullname) AS bidder_name`)
+```
+
+**Cách sửa:** Trích xuất thành hàm helper `maskedBidderName()`.
+
+---
+
+#### DRY-03: Watchlist JOIN lặp lại 5 lần (product.model.js)
+
+**Mô tả:** Logic join bảng watchlist bị copy-paste.
+
+**Code vi phạm:**
+```js
+.leftJoin('watchlists', function() {
+    this.on('products.id', '=', 'watchlists.product_id')
+        .andOnVal('watchlists.user_id', '=', userId || -1);
+})
+```
+
+**Xuất hiện tại:** `findByProductIdForAdmin`, `searchPageByKeywords`, `findByCategoryId`, `findByCategoryIds`, `findByProductId2`.
+
+**Cách sửa:** Trích xuất thành hàm helper `addWatchlistJoin(query, userId)`.
+
+---
+
+#### DRY-04: Active product filter lặp lại 8+ lần (product.model.js)
+
+**Mô tả:** Điều kiện lọc sản phẩm đang active bị copy-paste.
+
+**Code vi phạm:**
+```js
+.where('products.end_at', '>', new Date())
+.whereNull('products.closed_at')
+```
+
+**Cách sửa:** Trích xuất thành hàm helper `addActiveFilter(query)`.
+
+---
+
+#### DRY-05: Logic sắp xếp (sort) lặp lại 3 lần (product.model.js)
+
+**Mô tả:** Chuỗi if/else if cho sorting bị copy-paste y hệt.
+
+**Code vi phạm (lặp lại trong `searchPageByKeywords`, `findByCategoryId`, `findByCategoryIds`):**
+```js
+if (sort === 'price_asc') {
+    queryBuilder.orderBy('products.current_price', 'asc');
+} else if (sort === 'price_desc') {
+    queryBuilder.orderBy('products.current_price', 'desc');
+} else if (sort === 'newest') {
+    queryBuilder.orderBy('products.created_at', 'desc');
+} else if (sort === 'oldest') {
+    queryBuilder.orderBy('products.created_at', 'asc');
+} else {
+    queryBuilder.orderBy('products.created_at', 'desc');
 }
 ```
 
+**Cách sửa:** Trích xuất thành hàm `applySort(query, sort)` + dùng map thay vì if/else (đồng thời sửa OCP).
+
 ---
 
-## 📱 Permissions
+#### DRY-06: Keyword normalization lặp lại 2 lần (product.model.js)
 
-```xml
-<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-<uses-permission android:name="android.permission.CAMERA"/>
-<uses-permission android:name="android.permission.INTERNET"/>
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-<uses-permission android:name="android.permission.SET_WALLPAPER"/>
+**Mô tả:** Logic xử lý dấu tiếng Việt bị copy-paste giữa `searchPageByKeywords` và `countByKeywords`.
+
+**Code vi phạm:**
+```js
+const searchQuery = keywords.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd').replace(/Đ/g, 'D');
+```
+
+**Cách sửa:** Trích xuất thành hàm `normalizeKeywords(keywords)`.
+
+---
+
+#### DRY-07: Keyword WHERE clause lặp lại 2 lần (product.model.js)
+
+**Mô tả:** Toàn bộ khối `.where()` cho tìm kiếm keyword bị duplicate giữa `searchPageByKeywords` và `countByKeywords`.
+
+**Cách sửa:** Trích xuất thành hàm `buildKeywordWhereClause(builder, searchQuery, logic)`.
+
+---
+
+#### DRY-08: `getPaymentInvoice` / `getShippingInvoice` gần giống hệt (invoice.model.js)
+
+**Mô tả:** Hai hàm chỉ khác giá trị `invoice_type` (`'payment'` vs `'shipping'`), nhưng toàn bộ query bị copy-paste.
+
+**Cách sửa:** Gộp thành `getInvoiceByType(orderId, invoiceType)`, giữ lại 2 hàm cũ gọi vào hàm chung.
+
+---
+
+#### DRY-09: `createPaymentInvoice` / `createShippingInvoice` gần giống hệt (invoice.model.js)
+
+**Mô tả:** Hai hàm tạo invoice chỉ khác vài field nhưng cấu trúc bị duplicate hoàn toàn.
+
+**Cách sửa:** Trích xuất logic chung thành hàm `createInvoice(invoiceData, type)`.
+
+---
+
+#### DRY-10: `findByIdWithDetails` / `findByProductIdWithDetails` gần giống hệt (order.model.js)
+
+**Mô tả:** Hai hàm chỉ khác WHERE clause (`orders.id` vs `orders.product_id`), nhưng toàn bộ select/join bị copy-paste (~30 dòng mỗi hàm).
+
+**Cách sửa:** Gộp thành hàm nội bộ `findOrderWithDetails(whereClause)`, hai hàm export gọi vào.
+
+---
+
+#### DRY-11: `createReview` / `create` làm cùng một việc (review.model.js)
+
+**Mô tả:** Hai hàm cùng insert vào bảng `reviews` với logic gần giống. `createReview` nhận object có `reviewData`, `create` nhận object riêng lẻ.
+
+**Cách sửa:** Giữ `createReview` làm hàm chính, `create` gọi lại `createReview`.
+
+---
+
+### 2.2 SRP — Single Responsibility Principle
+
+#### SRP-01: File system operations trong model (invoice.model.js)
+
+**Mô tả:** Hàm `moveUploadedFiles()` thực hiện thao tác file system (đọc/ghi/di chuyển file) ngay bên trong model layer. Model chỉ nên chịu trách nhiệm về database.
+
+**Code vi phạm:**
+```js
+// Trong invoice.model.js
+import fs from 'fs';
+import path from 'path';
+
+function moveUploadedFiles(tempUrls, type) {
+  // ... ~30 dòng xử lý file system
+  fs.mkdirSync(targetPath, { recursive: true });
+  fs.renameSync(tempPath, newPath);
+  // ...
+}
+```
+
+**Cách sửa:** Di chuyển `moveUploadedFiles` sang `src/utils/fileHelper.js`.
+
+---
+
+#### SRP-02: Business logic trong model — `cancelProduct` (product.model.js)
+
+**Mô tả:** Hàm `cancelProduct` không chỉ cập nhật product mà còn query orders, cancel orders — đây là business logic nên nằm ở service/route layer.
+
+**Code vi phạm:**
+```js
+export async function cancelProduct(productId, sellerId) {
+  const product = await db('products').where('id', productId).first();
+  // ... verify seller ...
+  // Cancel active orders (business logic!)
+  const activeOrders = await db('orders')...
+  for (let order of activeOrders) {
+    await db('orders').where('id', order.id).update({...});
+  }
+  await updateProduct(productId, {...});
+  return product;
+}
+```
+
+**Cách sửa:** Tách logic cancel orders ra khỏi model, chỉ giữ hàm update product thuần túy. Sử dụng transaction để đảm bảo tính toàn vẹn.
+
+---
+
+### 2.3 OCP — Open/Closed Principle
+
+#### OCP-01: Sort logic dùng if/else chain (product.model.js)
+
+**Mô tả:** Mỗi khi thêm kiểu sort mới, phải sửa code bên trong hàm (vi phạm "closed for modification").
+
+**Code vi phạm:** (xem DRY-05 ở trên)
+
+**Cách sửa:** Dùng mapping object `SORT_OPTIONS` — thêm sort mới chỉ cần thêm entry vào map.
+
+```js
+const SORT_OPTIONS = {
+  'price_asc':  { column: 'products.current_price', order: 'asc' },
+  'price_desc': { column: 'products.current_price', order: 'desc' },
+  'newest':     { column: 'products.created_at', order: 'desc' },
+  'oldest':     { column: 'products.created_at', order: 'asc' },
+};
 ```
 
 ---
 
-## 🔧 Yêu cầu hệ thống
+### 2.4 DIP — Dependency Inversion Principle
 
-- **Min SDK**: 26 (Android 8.0 Oreo)
-- **Target SDK**: 31 (Android 12)
-- **Compile SDK**: 31
-- **Java Version**: 1.8
+#### DIP-01: Hardcoded database credentials (db.js)
 
----
+**Mô tả:** File `db.js` chứa trực tiếp host, user, password thay vì đọc từ biến môi trường. Ngoài ra còn có **bug**: `post: 5432` thay vì `port: 5432`.
 
-## 📊 Thống kê Code
-
-| Loại | Số lượng |
-|------|----------|
-| Activities | 4 |
-| Fragments | 12 |
-| Adapters | 9 |
-| Helper Classes | 2 |
-| Utility Classes | 5 |
-| Custom Views | 3 |
-| Interfaces | 7 |
-| Layout Files | 30 |
-| **Tổng Java Files** | **~42** |
-
----
-
-## 🏗️ Kiến trúc
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                      MainActivity                        │
-│  ┌─────────────────────────────────────────────────────┤
-│  │              BottomNavigationView                   │
-│  │  ┌──────┬──────────┬──────────┬──────────┐         │
-│  │  │Folders│  Albums  │ Settings │   Hide   │         │
-│  └──┴──────┴──────────┴──────────┴──────────┴─────────┤
-│                                                         │
-│  ┌─────────────────────────────────────────────────────┤
-│  │                  Fragment Container                  │
-│  │                                                      │
-│  │   FoldersFragment ──→ PicturesFragment              │
-│  │                              │                       │
-│  │                              ↓                       │
-│  │                        LargeImage Activity          │
-│  │                              │                       │
-│  │                              ↓                       │
-│  │                     EditImageActivity               │
-│  │                                                      │
-│  │   AlbumsFragment ──→ PicturesFragment               │
-│  │                                                      │
-│  │   SettingsFragment                                  │
-│  │                                                      │
-│  │   HideFragment (password protected)                 │
-│  │   TrashedFragment                                   │
-│  └─────────────────────────────────────────────────────┘
-└─────────────────────────────────────────────────────────┘
+**Code vi phạm:**
+```js
+export default knex({
+  client: 'pg',
+  connection: {
+    host: 'aws-1-ap-southeast-2.pooler.supabase.com',
+    post: 5432,  // ← BUG: phải là "port"
+    user: 'postgres.oirldpzqsfngdmisrakp',
+    password: 'WYaxZ0myJw9fIbPH',
+    database: 'postgres'
+  }
+});
 ```
 
----
-
-## 👥 Đồ án môn học
-
-**Môn học**: CSC13009 - Lập trình Di động (Mobile Programming)
-
-**Trường**: Đại học Khoa học Tự nhiên - ĐHQG HCM
+**Cách sửa:** Sử dụng `process.env.*` đã load từ `.env` thông qua `dotenv`.
 
 ---
 
-## 📝 License
+### 2.5 KISS — Keep It Simple, Stupid
 
-This project is for educational purposes.
+#### KISS-01: `BASE_QUERY` ở module-level + where clause trùng lặp (product.model.js)
+
+**Mô tả:** `BASE_QUERY` được tạo ở module-level và luôn phải dùng `.clone()`. Thêm vào đó, `findTopEnding` và `findTopPrice` lại thêm `.where('products.end_at', '>', new Date())` một lần nữa dù `BASE_QUERY` đã có rồi — gây nhầm lẫn.
+
+**Code vi phạm:**
+```js
+const BASE_QUERY = db('products')
+  .leftJoin('users', ...)
+  .select(...)
+  .where('end_at', '>', new Date()) // ← đã có active filter
+  .limit(5);
+
+export function findTopEnding() {
+  return BASE_QUERY.clone()
+    .where('products.end_at', '>', new Date())   // ← thêm lần nữa (thừa!)
+    .whereNull('products.closed_at')
+    .orderBy('end_at', 'asc');
+}
+```
+
+**Cách sửa:** Thay `BASE_QUERY` bằng hàm `createTopQuery()` rõ ràng hơn, xóa các where clause trùng lặp.
+
+---
+
+#### KISS-02: Đặt tên hàm không rõ ràng — `findByProductId2` (product.model.js)
+
+**Mô tả:** Tên `findByProductId2` không mô tả được sự khác biệt so với `findByProductId`. Thực tế hàm này bổ sung thêm watchlist check + seller info.
+
+**Cách sửa:** Đổi tên thành `findByProductIdWithWatchlist` — giữ lại alias `findByProductId2` cho backward-compatible.
+
+---
+
+### 2.6 YAGNI — You Ain't Gonna Need It
+
+#### YAGNI-01: `hasPaymentInvoice` / `hasShippingInvoice` không được sử dụng (invoice.model.js)
+
+**Mô tả:** Hai hàm này được định nghĩa nhưng không có file nào gọi đến.
+
+**Cách sửa:** Gộp thành `hasInvoiceOfType(orderId, type)` để giảm code chết, giữ lại phòng trường hợp cần.
+
+---
+
+#### YAGNI-02: `getRepliesByCommentId` (singular) không được sử dụng (productComment.model.js)
+
+**Mô tả:** Chỉ có phiên bản batch `getRepliesByCommentIds` (plural) được sử dụng. Phiên bản đơn `getRepliesByCommentId` là dead code.
+
+**Cách sửa:** Xóa hàm, vì `getRepliesByCommentIds([id])` có thể thay thế hoàn toàn.
+
+---
+
+#### YAGNI-03: `editNewProductLimitMinutes` không được sử dụng (systemSetting.model.js)
+
+**Mô tả:** Hàm đặc thù cho 1 setting cụ thể nhưng không được gọi ở bất kỳ đâu. Hàm `updateSetting(key, value)` tổng quát hơn đã tồn tại.
+
+**Cách sửa:** Xóa hàm, dùng `updateSetting('new_product_limit_minutes', minutes)` khi cần.
+
+---
+
+#### YAGNI-04: `findByIdWithDetails` / `findByProductIdWithDetails` không được sử dụng (order.model.js)
+
+**Mô tả:** Hai hàm query chi tiết nhưng không được gọi ở bất kỳ route nào.
+
+**Cách sửa:** Gộp thành 1 hàm nội bộ, giữ export phòng trường hợp cần trong tương lai.
+
+---
+
+## 3. Tổng hợp thay đổi đã thực hiện
+
+| File | Thay đổi | Nguyên lý áp dụng |
+|------|----------|-------------------|
+| `src/utils/db.js` | Sử dụng `process.env`, sửa bug `post` → `port` | DIP |
+| `src/utils/fileHelper.js` | **Tạo mới** — chuyển `moveUploadedFiles` từ invoice model | SRP |
+| `src/models/product.model.js` | Trích xuất 7 helper functions, refactor 15+ hàm, đổi tên `findByProductId2`, xóa BASE_QUERY | DRY, OCP, KISS |
+| `src/models/invoice.model.js` | Gộp các hàm duplicate thành hàm chung, import fileHelper | DRY, SRP, YAGNI |
+| `src/models/order.model.js` | Gộp `findByIdWithDetails`/`findByProductIdWithDetails` | DRY, YAGNI |
+| `src/models/review.model.js` | Gộp `create` gọi lại `createReview` | DRY |
+| `src/models/autoBidding.model.js` | Trích xuất `bidCountSubquery` | DRY |
+| `src/models/productComment.model.js` | Xóa `getRepliesByCommentId` (unused) | YAGNI |
+| `src/models/systemSetting.model.js` | Xóa `editNewProductLimitMinutes` (unused) | YAGNI |
+
+---
+
+> **Ghi chú:** Tất cả hàm export cũ đều được giữ lại (hoặc tạo alias) để đảm bảo backward-compatible với các route hiện tại.
