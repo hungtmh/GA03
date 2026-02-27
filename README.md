@@ -1,4 +1,4 @@
-# 📋 BÁO CÁO VI PHẠM NGUYÊN LÝ THIẾT KẾ — Models & Database Layer
+# BÁO CÁO VI PHẠM NGUYÊN LÝ THIẾT KẾ — Models & Database Layer
 
 > **Phạm vi kiểm tra:** `src/models/*.model.js`, `src/utils/db.js`  
 > **Ngày kiểm tra:** 26/02/2026  
@@ -6,7 +6,7 @@
 
 ---
 
-## 📝 MỤC LỤC
+## MỤC LỤC
 
 | Lỗi # | Nguyên lý | File | Mô tả ngắn | Debt Score |
 |--------|-----------|------|-------------|------------|
@@ -24,14 +24,14 @@
 
 ---
 
-## 📝 LỖI #1
+## LỖI #1
 
-📁 **File:** `src/models/product.model.js`  
-📍 **Dòng:** Xuất hiện tại dòng 9, 42, 82, 139, 229, 238, 292, 336, 358, 425, 462, 505, 539 (bản gốc, lặp 15+ lần)  
-🚫 **Nguyên lý vi phạm:** DRY (Don't Repeat Yourself)  
-📋 **Mô tả vấn đề:** Subquery `bid_count` để đếm số lượt đấu giá bị copy-paste y hệt nhau tại 15+ hàm khác nhau trong `product.model.js` và cả trong `autoBidding.model.js`.
+**File:** `src/models/product.model.js`  
+**Dòng:** Xuất hiện tại dòng 9, 42, 82, 139, 229, 238, 292, 336, 358, 425, 462, 505, 539 (bản gốc, lặp 15+ lần)  
+**Nguyên lý vi phạm:** DRY (Don't Repeat Yourself)  
+**Mô tả vấn đề:** Subquery `bid_count` để đếm số lượt đấu giá bị copy-paste y hệt nhau tại 15+ hàm khác nhau trong `product.model.js` và cả trong `autoBidding.model.js`.
 
-💻 **Code hiện tại (trước khi sửa):**
+**Code hiện tại (trước khi sửa):**
 ```javascript
 // Đoạn này xuất hiện y hệt trong 15+ hàm:
 // findAll, findByProductIdForAdmin, findPage, searchPageByKeywords,
@@ -60,42 +60,42 @@ export function findAll() {
 
 ---
 
-### ❌ Tại sao đây là vấn đề:
+### Tại sao đây là vấn đề:
 - Đoạn SQL subquery 5 dòng bị lặp lại nguyên bản ở 15+ vị trí khác nhau
 - Nếu cần đổi tên bảng `bidding_history` hoặc thêm điều kiện, phải sửa tại 15+ chỗ
 - Vi phạm rõ ràng nguyên lý DRY — một thay đổi phải sửa ở nhiều nơi
 
-### 📊 PHÂN TÍCH TÁC ĐỘNG
+### PHÂN TÍCH TÁC ĐỘNG
 
-❌ **Khó bảo trì:**
+**Khó bảo trì:**
 - Khi cần sửa bug liên quan đến bid_count, phải tìm và sửa ở **15+ chỗ** trong 2 file
 - Developer mới dễ bỏ sót 1-2 chỗ khi sửa, gây ra inconsistency
 
-❌ **Khó mở rộng:**
+**Khó mở rộng:**
 - Nếu muốn thêm điều kiện lọc vào bid_count (ví dụ: chỉ đếm bid hợp lệ), phải sửa tất cả 15+ nơi
 - Rủi ro cao break existing features nếu sửa thiếu
 
-❌ **Khó test:**
+**Khó test:**
 - Không thể test logic đếm bid riêng lẻ, nó bị nhúng sâu vào từng query
 
-❌ **Khó đọc hiểu:**
+**Khó đọc hiểu:**
 - 5 dòng SQL raw lặp lại liên tục gây nhiễu khi đọc code
 
-💰 **Technical Debt Score: 9/10** (cần fix urgent — ảnh hưởng diện rộng)
+**Technical Debt Score: 9/10** (cần fix urgent — ảnh hưởng diện rộng)
 
 ---
 
-### ✅ ĐỀ XUẤT GIẢI PHÁP
+### ĐỀ XUẤT GIẢI PHÁP
 
-📝 **Mô tả giải pháp:**  
+**Mô tả giải pháp:**  
 Trích xuất subquery thành hàm helper `bidCountSubquery()` ở đầu file, tất cả 15+ hàm gọi helper thay vì copy-paste.
 
-🏗️ **Cấu trúc mới:**
+**Cấu trúc mới:**
 - Thêm hàm `bidCountSubquery()` (private helper) ở đầu `product.model.js`
 - Thêm hàm tương tự trong `autoBidding.model.js`
 - Tất cả hàm export gọi `bidCountSubquery()` thay vì inline SQL
 
-💻 **Code đề xuất:**
+**Code đề xuất:**
 ```javascript
 // Helper function — khai báo 1 lần duy nhất
 function bidCountSubquery() {
@@ -119,15 +119,15 @@ export function findAll() {
 }
 ```
 
-✅ **Lợi ích:**
+**Lợi ích:**
 - Sửa 1 chỗ → ảnh hưởng toàn bộ 15+ hàm
 - Code gọn hơn ~60 dòng tổng cộng
 - Dễ đọc, dễ hiểu mục đích
 
-⚠️ **Trade-offs:**
+**Trade-offs:**
 - Không có trade-off đáng kể
 
-📋 **Checklist implementation:**
+**Checklist implementation:**
 - [x] Tạo hàm `bidCountSubquery()` trong `product.model.js`
 - [x] Tạo hàm `bidCountSubquery()` trong `autoBidding.model.js`
 - [x] Refactor tất cả 15+ hàm sử dụng helper
@@ -136,14 +136,14 @@ export function findAll() {
 
 ---
 
-## 📝 LỖI #2
+## LỖI #2
 
-📁 **File:** `src/models/product.model.js`  
-📍 **Dòng:** 149-161, 248-261, 302-315 (bản gốc, lặp 3 lần)  
-🚫 **Nguyên lý vi phạm:** DRY (Don't Repeat Yourself) + OCP (Open/Closed Principle)  
-📋 **Mô tả vấn đề:** Logic sắp xếp sản phẩm (sort) sử dụng chuỗi if/else chain giống hệt nhau, bị copy-paste ở 3 hàm: `searchPageByKeywords`, `findByCategoryId`, `findByCategoryIds`. Thêm sort mới phải sửa ở 3 nơi (vi phạm DRY), và phải sửa code bên trong hàm (vi phạm OCP).
+**File:** `src/models/product.model.js`  
+**Dòng:** 149-161, 248-261, 302-315 (bản gốc, lặp 3 lần)  
+**Nguyên lý vi phạm:** DRY (Don't Repeat Yourself) + OCP (Open/Closed Principle)  
+**Mô tả vấn đề:** Logic sắp xếp sản phẩm (sort) sử dụng chuỗi if/else chain giống hệt nhau, bị copy-paste ở 3 hàm: `searchPageByKeywords`, `findByCategoryId`, `findByCategoryIds`. Thêm sort mới phải sửa ở 3 nơi (vi phạm DRY), và phải sửa code bên trong hàm (vi phạm OCP).
 
-💻 **Code hiện tại (trước khi sửa):**
+**Code hiện tại (trước khi sửa):**
 ```javascript
 // Đoạn này lặp lại ở 3 hàm: searchPageByKeywords, findByCategoryId, findByCategoryIds
 
@@ -166,41 +166,41 @@ export function findAll() {
 
 ---
 
-### ❌ Tại sao đây là vấn đề:
+### Tại sao đây là vấn đề:
 - Cùng 1 logic sắp xếp bị viết 3 lần ở 3 hàm khác nhau
 - Thêm sort option mới (ví dụ: sort theo `bid_count`) phải sửa code bên trong 3 hàm
 - If/else chain dài, không linh hoạt — vi phạm OCP ("open for extension, closed for modification")
 
-### 📊 PHÂN TÍCH TÁC ĐỘNG
+### PHÂN TÍCH TÁC ĐỘNG
 
-❌ **Khó bảo trì:**
+**Khó bảo trì:**
 - Sửa bug sort phải tìm 3 chỗ
 - Default sort khác nhau giữa các hàm (1 hàm dùng `end_at`, 2 hàm dùng `created_at`) — dễ nhầm lẫn
 
-❌ **Khó mở rộng:**
+**Khó mở rộng:**
 - Thêm sort option mới phải mở code, thêm `else if` vào 3 hàm (vi phạm OCP)
 - Risk break existing sort behavior
 
-❌ **Khó test:**
+**Khó test:**
 - Phải test sort ở cả 3 hàm riêng, không thể test logic sort độc lập
 
-❌ **Khó đọc hiểu:**
+**Khó đọc hiểu:**
 - 12 dòng if/else chain khiến hàm dài hơn không cần thiết
 
-💰 **Technical Debt Score: 7/10**
+**Technical Debt Score: 7/10**
 
 ---
 
-### ✅ ĐỀ XUẤT GIẢI PHÁP
+### ĐỀ XUẤT GIẢI PHÁP
 
-📝 **Mô tả giải pháp:**  
+**Mô tả giải pháp:**  
 Sử dụng mapping object `SORT_OPTIONS` (Strategy Pattern đơn giản) + hàm `applySort()`. Thêm sort mới chỉ cần thêm 1 entry vào map — không cần sửa code logic.
 
-🏗️ **Cấu trúc mới:**
+**Cấu trúc mới:**
 - `SORT_OPTIONS` — object map chứa tất cả sort options
 - `applySort(query, sort, defaultColumn, defaultOrder)` — áp dụng sort lên query
 
-💻 **Code đề xuất:**
+**Code đề xuất:**
 ```javascript
 // Mapping object — thêm sort mới chỉ cần thêm 1 dòng
 const SORT_OPTIONS = {
@@ -222,15 +222,15 @@ function applySort(query, sort, defaultColumn = 'products.end_at', defaultOrder 
 query = applySort(query, sort);
 ```
 
-✅ **Lợi ích:**
+**Lợi ích:**
 - Thêm sort option mới: chỉ thêm 1 entry vào `SORT_OPTIONS` (OCP compliant)
 - Code gọn: từ 12 dòng if/else → 1 dòng `applySort()`
 - Logic sort được test riêng lẻ
 
-⚠️ **Trade-offs:**
+**Trade-offs:**
 - Default sort khác nhau giữa các hàm → cần truyền tham số `defaultColumn`
 
-📋 **Checklist implementation:**
+**Checklist implementation:**
 - [x] Tạo `SORT_OPTIONS` mapping object
 - [x] Tạo hàm `applySort()`
 - [x] Refactor 3 hàm sử dụng `applySort()`
@@ -239,14 +239,14 @@ query = applySort(query, sort);
 
 ---
 
-## 📝 LỖI #3
+## LỖI #3
 
-📁 **File:** `src/models/product.model.js`  
-📍 **Dòng:** 35, 102, 213, 282, 411 (bản gốc, lặp 5 lần)  
-🚫 **Nguyên lý vi phạm:** DRY (Don't Repeat Yourself)  
-📋 **Mô tả vấn đề:** Logic JOIN bảng `watchlists` để kiểm tra user đã yêu thích sản phẩm hay chưa bị copy-paste 5 lần, kèm theo cùng 1 đoạn `.select(db.raw('watchlists.product_id IS NOT NULL AS is_favorite'))` lặp lại.
+**File:** `src/models/product.model.js`  
+**Dòng:** 35, 102, 213, 282, 411 (bản gốc, lặp 5 lần)  
+**Nguyên lý vi phạm:** DRY (Don't Repeat Yourself)  
+**Mô tả vấn đề:** Logic JOIN bảng `watchlists` để kiểm tra user đã yêu thích sản phẩm hay chưa bị copy-paste 5 lần, kèm theo cùng 1 đoạn `.select(db.raw('watchlists.product_id IS NOT NULL AS is_favorite'))` lặp lại.
 
-💻 **Code hiện tại (trước khi sửa):**
+**Code hiện tại (trước khi sửa):**
 ```javascript
 // Đoạn này lặp 5 lần trong: findByProductIdForAdmin, searchPageByKeywords,
 // findByCategoryId, findByCategoryIds, findByProductId2
@@ -265,35 +265,35 @@ query = applySort(query, sort);
 
 ---
 
-### ❌ Tại sao đây là vấn đề:
+### Tại sao đây là vấn đề:
 - 5 đoạn JOIN + select giống hệt nhau, tổng ~25 dòng duplicate
 - Nếu thay đổi logic yêu thích (ví dụ: thêm bảng `favorites`), phải sửa 5 nơi
 - Logic fallback `-1` cho userId bị phân tán, khó đảm bảo consistency
 
-### 📊 PHÂN TÍCH TÁC ĐỘNG
+### PHÂN TÍCH TÁC ĐỘNG
 
-❌ **Khó bảo trì:**
+**Khó bảo trì:**
 - Sửa 1 bug phải sửa 5 chỗ, dễ bỏ sót
 
-❌ **Khó mở rộng:**
+**Khó mở rộng:**
 - Đổi cấu trúc bảng watchlists → sửa 5 nơi
 
-❌ **Khó test:**
+**Khó test:**
 - Logic yêu thích không test riêng được
 
-❌ **Khó đọc hiểu:**
+**Khó đọc hiểu:**
 - Mỗi hàm dài thêm 5 dòng không cần thiết
 
-💰 **Technical Debt Score: 7/10**
+**Technical Debt Score: 7/10**
 
 ---
 
-### ✅ ĐỀ XUẤT GIẢI PHÁP
+### ĐỀ XUẤT GIẢI PHÁP
 
-📝 **Mô tả giải pháp:**  
+**Mô tả giải pháp:**  
 Trích xuất thành 2 helper: `addWatchlistJoin(query, userId)` và `isFavoriteSelect()`.
 
-💻 **Code đề xuất:**
+**Code đề xuất:**
 ```javascript
 function addWatchlistJoin(query, userId) {
   return query.leftJoin('watchlists', function () {
@@ -312,29 +312,29 @@ query = addWatchlistJoin(query, userId);
 query.select('products.*', isFavoriteSelect());
 ```
 
-✅ **Lợi ích:**
+**Lợi ích:**
 - 1 chỗ sửa cho logic yêu thích
 - Code gọn: từ 5 dòng → 2 dòng mỗi hàm
 - Logic fallback `-1` tập trung 1 nơi
 
-⚠️ **Trade-offs:**
+**Trade-offs:**
 - Không có
 
-📋 **Checklist implementation:**
+**Checklist implementation:**
 - [x] Tạo `addWatchlistJoin()` và `isFavoriteSelect()`
 - [x] Refactor 5 hàm
 - [x] Test favorite toggle
 
 ---
 
-## 📝 LỖI #4
+## LỖI #4
 
-📁 **File:** `src/models/product.model.js`  
-📍 **Dòng:** 334-354 (bản gốc)  
-🚫 **Nguyên lý vi phạm:** KISS (Keep It Simple, Stupid)  
-📋 **Mô tả vấn đề:** `BASE_QUERY` được khai báo ở module-level, buộc phải luôn dùng `.clone()`. Hơn nữa, `findTopEnding` và `findTopPrice` thêm `.where('products.end_at', '>', new Date())` một lần nữa dù `BASE_QUERY` đã có rồi — gây nhầm lẫn về intention.
+**File:** `src/models/product.model.js`  
+**Dòng:** 334-354 (bản gốc)  
+**Nguyên lý vi phạm:** KISS (Keep It Simple, Stupid)  
+**Mô tả vấn đề:** `BASE_QUERY` được khai báo ở module-level, buộc phải luôn dùng `.clone()`. Hơn nữa, `findTopEnding` và `findTopPrice` thêm `.where('products.end_at', '>', new Date())` một lần nữa dù `BASE_QUERY` đã có rồi — gây nhầm lẫn về intention.
 
-💻 **Code hiện tại (trước khi sửa):**
+**Code hiện tại (trước khi sửa):**
 ```javascript
 // Khai báo ở module-level — shared mutable state
 const BASE_QUERY = db('products')
@@ -364,36 +364,36 @@ export function findTopPrice() {
 
 ---
 
-### ❌ Tại sao đây là vấn đề:
+### Tại sao đây là vấn đề:
 - Module-level query object là shared mutable state — dễ gây side effect nếu quên `.clone()`
 - Where clause active filter bị duplicate, gây hoang mang: "đã filter rồi sao lại filter tiếp?"
 - `BASE_QUERY` thiếu `whereNull('closed_at')` — logic active filter không đầy đủ ở base
 
-### 📊 PHÂN TÍCH TÁC ĐỘNG
+### PHÂN TÍCH TÁC ĐỘNG
 
-❌ **Khó bảo trì:**
+**Khó bảo trì:**
 - Developer mới không hiểu tại sao phải `.clone()`, quên sẽ gây bug nghiêm trọng
 - Where clause trùng lặp gây confusion
 
-❌ **Khó mở rộng:**
+**Khó mở rộng:**
 - Thêm Top query mới phải nhớ `.clone()` + hiểu implicit state
 
-❌ **Khó test:**
+**Khó test:**
 - Shared state gây flaky tests
 
-❌ **Khó đọc hiểu:**
+**Khó đọc hiểu:**
 - Code không self-documenting, phải hiểu knex internal (`.clone()`)
 
-💰 **Technical Debt Score: 6/10**
+**Technical Debt Score: 6/10**
 
 ---
 
-### ✅ ĐỀ XUẤT GIẢI PHÁP
+### ĐỀ XUẤT GIẢI PHÁP
 
-📝 **Mô tả giải pháp:**  
+**Mô tả giải pháp:**  
 Thay `BASE_QUERY` module-level bằng hàm factory `createTopQuery()` — mỗi lần gọi trả về query object mới, không cần `.clone()`.
 
-💻 **Code đề xuất:**
+**Code đề xuất:**
 ```javascript
 function createTopQuery() {
   let query = db('products')
@@ -420,15 +420,15 @@ export function findTopBids() {
 }
 ```
 
-✅ **Lợi ích:**
+**Lợi ích:**
 - Không shared mutable state, không cần `.clone()`
 - Mỗi hàm rõ ràng mục đích, không where clause trùng lặp
 - Active filter logic đầy đủ (bao gồm `closed_at`)
 
-⚠️ **Trade-offs:**
+**Trade-offs:**
 - Mỗi lần gọi tạo object mới — performance không ảnh hưởng vì knex là lazy query builder
 
-📋 **Checklist implementation:**
+**Checklist implementation:**
 - [x] Xóa `BASE_QUERY` const
 - [x] Tạo `createTopQuery()` function
 - [x] Refactor `findTopEnding`, `findTopPrice`, `findTopBids`
@@ -436,14 +436,14 @@ export function findTopBids() {
 
 ---
 
-## 📝 LỖI #5
+## LỖI #5
 
-📁 **File:** `src/models/product.model.js`  
-📍 **Dòng:** 404 (bản gốc)  
-🚫 **Nguyên lý vi phạm:** KISS (Keep It Simple, Stupid)  
-📋 **Mô tả vấn đề:** Hàm `findByProductId2` có tên không mô tả được chức năng. Sự khác biệt so với `findByProductId` là bổ sung watchlist check + seller email — nhưng tên "2" không truyền đạt điều này.
+**File:** `src/models/product.model.js`  
+**Dòng:** 404 (bản gốc)  
+**Nguyên lý vi phạm:** KISS (Keep It Simple, Stupid)  
+**Mô tả vấn đề:** Hàm `findByProductId2` có tên không mô tả được chức năng. Sự khác biệt so với `findByProductId` là bổ sung watchlist check + seller email — nhưng tên "2" không truyền đạt điều này.
 
-💻 **Code hiện tại (trước khi sửa):**
+**Code hiện tại (trước khi sửa):**
 ```javascript
 export async function findByProductId2(productId, userId) {
   // Chuyển sang async để xử lý dữ liệu trước khi trả về controller
@@ -470,35 +470,35 @@ export async function findByProductId2(productId, userId) {
 
 ---
 
-### ❌ Tại sao đây là vấn đề:
+### Tại sao đây là vấn đề:
 - Tên `findByProductId2` vi phạm naming convention — suffix "2" không self-documenting
 - Developer mới phải đọc toàn bộ implementation để hiểu khác gì `findByProductId`
 - Không tuân thủ "code should be its own documentation"
 
-### 📊 PHÂN TÍCH TÁC ĐỘNG
+### PHÂN TÍCH TÁC ĐỘNG
 
-❌ **Khó bảo trì:**
+**Khó bảo trì:**
 - Developer mất thời gian tìm hiểu "2" nghĩa là gì
 
-❌ **Khó mở rộng:**
+**Khó mở rộng:**
 - Nếu cần `findByProductId3`, naming convention càng tệ hơn
 
-❌ **Khó test:**
+**Khó test:**
 - Test name không mô tả hành vi: `test findByProductId2` — test cái gì?
 
-❌ **Khó đọc hiểu:**
+**Khó đọc hiểu:**
 - Code calling: `productModel.findByProductId2(id, userId)` — không rõ intention
 
-💰 **Technical Debt Score: 4/10** (minor nhưng ảnh hưởng readability)
+**Technical Debt Score: 4/10** (minor nhưng ảnh hưởng readability)
 
 ---
 
-### ✅ ĐỀ XUẤT GIẢI PHÁP
+### ĐỀ XUẤT GIẢI PHÁP
 
-📝 **Mô tả giải pháp:**  
+**Mô tả giải pháp:**  
 Đổi tên thành `findByProductIdWithWatchlist` — mô tả rõ chức năng bổ sung. Giữ alias `findByProductId2` cho backward-compatible.
 
-💻 **Code đề xuất:**
+**Code đề xuất:**
 ```javascript
 export async function findByProductIdWithWatchlist(productId, userId) {
   // ... logic giữ nguyên
@@ -508,28 +508,28 @@ export async function findByProductIdWithWatchlist(productId, userId) {
 export const findByProductId2 = findByProductIdWithWatchlist;
 ```
 
-✅ **Lợi ích:**
+**Lợi ích:**
 - Tên hàm tự giải thích mục đích
 - Không break code cũ nhờ alias
 
-⚠️ **Trade-offs:**
+**Trade-offs:**
 - Tên dài hơn, nhưng rõ ràng hơn rất nhiều
 
-📋 **Checklist implementation:**
+**Checklist implementation:**
 - [x] Đổi tên hàm chính
 - [x] Tạo alias `findByProductId2`
 - [x] Không cần update imports (alias giữ nguyên)
 
 ---
 
-## 📝 LỖI #6
+## LỖI #6
 
-📁 **File:** `src/models/invoice.model.js`  
-📍 **Dòng:** 1-68 (bản gốc)  
-🚫 **Nguyên lý vi phạm:** SRP (Single Responsibility Principle)  
-📋 **Mô tả vấn đề:** `invoice.model.js` vừa chịu trách nhiệm database operations VỪA xử lý file system (di chuyển file upload). Import cả `fs`, `path`, `fileURLToPath` — không thuộc tầng Model.
+**File:** `src/models/invoice.model.js`  
+**Dòng:** 1-68 (bản gốc)  
+**Nguyên lý vi phạm:** SRP (Single Responsibility Principle)  
+**Mô tả vấn đề:** `invoice.model.js` vừa chịu trách nhiệm database operations VỪA xử lý file system (di chuyển file upload). Import cả `fs`, `path`, `fileURLToPath` — không thuộc tầng Model.
 
-💻 **Code hiện tại (trước khi sửa):**
+**Code hiện tại (trước khi sửa):**
 ```javascript
 import db from '../utils/db.js';
 import fs from 'fs';                    // ← File system trong Model!
@@ -575,41 +575,41 @@ function moveUploadedFiles(tempUrls, type) {
 
 ---
 
-### ❌ Tại sao đây là vấn đề:
+### Tại sao đây là vấn đề:
 - Model layer chỉ nên chịu trách nhiệm database CRUD — không nên xử lý file I/O
 - `fs`, `path` operations thuộc về utility/service layer
 - Gộp 2 concerns khác nhau (DB + File System) vào 1 file vi phạm SRP
 
-### 📊 PHÂN TÍCH TÁC ĐỘNG
+### PHÂN TÍCH TÁC ĐỘNG
 
-❌ **Khó bảo trì:**
+**Khó bảo trì:**
 - Đổi storage provider (local → S3/Cloud) phải sửa model file
 - Logic file system lẫn với DB code, khó phân biệt
 
-❌ **Khó mở rộng:**
+**Khó mở rộng:**
 - Thêm resize ảnh, validate file type → model càng phình to
 
-❌ **Khó test:**
+**Khó test:**
 - Unit test model phải mock cả `fs` module
 - Không thể test DB logic riêng biệt khỏi file operations
 
-❌ **Khó đọc hiểu:**
+**Khó đọc hiểu:**
 - Developer tìm model để xem DB schema, nhưng thấy 40 dòng file manipulation
 
-💰 **Technical Debt Score: 8/10** (ảnh hưởng kiến trúc)
+**Technical Debt Score: 8/10** (ảnh hưởng kiến trúc)
 
 ---
 
-### ✅ ĐỀ XUẤT GIẢI PHÁP
+### ĐỀ XUẤT GIẢI PHÁP
 
-📝 **Mô tả giải pháp:**  
+**Mô tả giải pháp:**  
 Di chuyển `moveUploadedFiles()` sang file utility riêng: `src/utils/fileHelper.js`. Model chỉ import và gọi.
 
-🏗️ **Cấu trúc mới:**
+**Cấu trúc mới:**
 - Tạo file mới: `src/utils/fileHelper.js` — chứa `moveUploadedFiles()`
 - `invoice.model.js` — import từ `fileHelper.js`, xóa `fs`, `path` imports
 
-💻 **Code đề xuất:**
+**Code đề xuất:**
 
 **`src/utils/fileHelper.js` (file mới):**
 ```javascript
@@ -632,15 +632,15 @@ import { moveUploadedFiles } from '../utils/fileHelper.js';
 // Không còn fs, path imports
 ```
 
-✅ **Lợi ích:**
+**Lợi ích:**
 - Model chỉ lo database — đúng SRP
 - `fileHelper.js` có thể reuse cho module khác
 - Unit test model không cần mock `fs`
 
-⚠️ **Trade-offs:**
+**Trade-offs:**
 - Thêm 1 file utility — nhưng đáng đánh đổi cho clean architecture
 
-📋 **Checklist implementation:**
+**Checklist implementation:**
 - [x] Tạo `src/utils/fileHelper.js`
 - [x] Di chuyển `moveUploadedFiles()` sang file mới
 - [x] Update imports trong `invoice.model.js`
@@ -649,14 +649,14 @@ import { moveUploadedFiles } from '../utils/fileHelper.js';
 
 ---
 
-## 📝 LỖI #7
+## LỖI #7
 
-📁 **File:** `src/models/invoice.model.js`  
-📍 **Dòng:** 72-139 (bản gốc)  
-🚫 **Nguyên lý vi phạm:** DRY (Don't Repeat Yourself)  
-📋 **Mô tả vấn đề:** `createPaymentInvoice()` và `createShippingInvoice()` gần giống hệt nhau — cùng flow: destructure data → move files → insert DB. Chỉ khác vài field (`payment_method` vs `tracking_number` + `shipping_provider`).
+**File:** `src/models/invoice.model.js`  
+**Dòng:** 72-139 (bản gốc)  
+**Nguyên lý vi phạm:** DRY (Don't Repeat Yourself)  
+**Mô tả vấn đề:** `createPaymentInvoice()` và `createShippingInvoice()` gần giống hệt nhau — cùng flow: destructure data → move files → insert DB. Chỉ khác vài field (`payment_method` vs `tracking_number` + `shipping_provider`).
 
-💻 **Code hiện tại (trước khi sửa):**
+**Code hiện tại (trước khi sửa):**
 ```javascript
 export async function createPaymentInvoice(invoiceData) {
   const { order_id, issuer_id, payment_method, payment_proof_urls, note } = invoiceData;
@@ -688,35 +688,35 @@ export async function createShippingInvoice(invoiceData) {
 
 ---
 
-### ❌ Tại sao đây là vấn đề:
+### Tại sao đây là vấn đề:
 - ~80% code giống hệt (destructure, moveFiles, insert, returning)
 - Thêm loại invoice mới (ví dụ: `refund`) phải copy-paste thêm 1 hàm nữa
 - Bug ở common flow (ví dụ: quên `is_verified: false`) phải sửa 2+ chỗ
 
-### 📊 PHÂN TÍCH TÁC ĐỘNG
+### PHÂN TÍCH TÁC ĐỘNG
 
-❌ **Khó bảo trì:**
+**Khó bảo trì:**
 - Sửa flow chung phải sửa 2 hàm
 
-❌ **Khó mở rộng:**
+**Khó mở rộng:**
 - Thêm loại invoice → thêm 1 hàm duplicate nữa
 
-❌ **Khó test:**
+**Khó test:**
 - Test 2 hàm có common logic, nhưng phải test riêng
 
-❌ **Khó đọc hiểu:**
+**Khó đọc hiểu:**
 - Phải so sánh 2 hàm để tìm điểm khác
 
-💰 **Technical Debt Score: 7/10**
+**Technical Debt Score: 7/10**
 
 ---
 
-### ✅ ĐỀ XUẤT GIẢI PHÁP
+### ĐỀ XUẤT GIẢI PHÁP
 
-📝 **Mô tả giải pháp:**  
+**Mô tả giải pháp:**  
 Tạo hàm private `createInvoice(invoiceData, type, proofUrls, proofField)` chứa flow chung. 2 hàm export gọi vào hàm chung.
 
-💻 **Code đề xuất:**
+**Code đề xuất:**
 ```javascript
 async function createInvoice(invoiceData, type, proofUrls, proofField) {
   const permanentUrls = moveUploadedFiles(proofUrls, `${type}_proofs`);
@@ -748,15 +748,15 @@ export async function createShippingInvoice(invoiceData) {
 }
 ```
 
-✅ **Lợi ích:**
+**Lợi ích:**
 - Common flow chỉ viết 1 lần
 - Thêm loại invoice mới: chỉ cần thêm 1 hàm wrapper 1 dòng
 - Backward-compatible: 2 hàm export giữ nguyên signature
 
-⚠️ **Trade-offs:**
+**Trade-offs:**
 - `if (type === ...)` trong `createInvoice` — chấp nhận được cho 2-3 loại
 
-📋 **Checklist implementation:**
+**Checklist implementation:**
 - [x] Tạo `createInvoice()` private function
 - [x] Refactor `createPaymentInvoice()` và `createShippingInvoice()`
 - [x] Test tạo cả 2 loại invoice
@@ -764,14 +764,14 @@ export async function createShippingInvoice(invoiceData) {
 
 ---
 
-## 📝 LỖI #8
+## LỖI #8
 
-📁 **File:** `src/models/invoice.model.js`  
-📍 **Dòng:** 156-186 (bản gốc)  
-🚫 **Nguyên lý vi phạm:** DRY (Don't Repeat Yourself)  
-📋 **Mô tả vấn đề:** `getPaymentInvoice()` và `getShippingInvoice()` giống hệt nhau, chỉ khác giá trị `invoice_type` ('payment' vs 'shipping').
+**File:** `src/models/invoice.model.js`  
+**Dòng:** 156-186 (bản gốc)  
+**Nguyên lý vi phạm:** DRY (Don't Repeat Yourself)  
+**Mô tả vấn đề:** `getPaymentInvoice()` và `getShippingInvoice()` giống hệt nhau, chỉ khác giá trị `invoice_type` ('payment' vs 'shipping').
 
-💻 **Code hiện tại (trước khi sửa):**
+**Code hiện tại (trước khi sửa):**
 ```javascript
 export async function getPaymentInvoice(orderId) {
   return db('invoices')
@@ -794,23 +794,23 @@ export async function getShippingInvoice(orderId) {
 
 ---
 
-### ❌ Tại sao đây là vấn đề:
+### Tại sao đây là vấn đề:
 - 2 hàm 100% giống nhau chỉ khác 1 string value
 - Vi phạm DRY rõ ràng nhất
 
-### 📊 PHÂN TÍCH TÁC ĐỘNG
+### PHÂN TÍCH TÁC ĐỘNG
 
-❌ **Khó bảo trì:** Thêm field vào select → sửa 2 nơi  
-❌ **Khó mở rộng:** Thêm loại invoice → thêm 1 hàm duplicate  
-❌ **Khó đọc hiểu:** Phải so 2 hàm dài để thấy chỉ khác 1 string  
+**Khó bảo trì:** Thêm field vào select → sửa 2 nơi  
+**Khó mở rộng:** Thêm loại invoice → thêm 1 hàm duplicate  
+**Khó đọc hiểu:** Phải so 2 hàm dài để thấy chỉ khác 1 string  
 
-💰 **Technical Debt Score: 6/10**
+**Technical Debt Score: 6/10**
 
 ---
 
-### ✅ ĐỀ XUẤT GIẢI PHÁP
+### ĐỀ XUẤT GIẢI PHÁP
 
-💻 **Code đề xuất:**
+**Code đề xuất:**
 ```javascript
 function getInvoiceByType(orderId, invoiceType) {
   return db('invoices')
@@ -830,23 +830,23 @@ export async function getShippingInvoice(orderId) {
 }
 ```
 
-✅ **Lợi ích:** Từ 16 dòng → 11 dòng, DRY, dễ mở rộng  
+**Lợi ích:** Từ 16 dòng → 11 dòng, DRY, dễ mở rộng  
 
-📋 **Checklist implementation:**
+**Checklist implementation:**
 - [x] Tạo `getInvoiceByType()` private function
 - [x] Refactor 2 hàm export
 - [x] Test lấy invoice cả 2 loại
 
 ---
 
-## 📝 LỖI #9
+## LỖI #9
 
-📁 **File:** `src/models/order.model.js`  
-📍 **Dòng:** 69-124 (bản gốc)  
-🚫 **Nguyên lý vi phạm:** DRY (Don't Repeat Yourself)  
-📋 **Mô tả vấn đề:** `findByIdWithDetails()` và `findByProductIdWithDetails()` có ~30 dòng JOIN + SELECT giống hệt nhau, chỉ khác WHERE clause (`orders.id` vs `orders.product_id`).
+**File:** `src/models/order.model.js`  
+**Dòng:** 69-124 (bản gốc)  
+**Nguyên lý vi phạm:** DRY (Don't Repeat Yourself)  
+**Mô tả vấn đề:** `findByIdWithDetails()` và `findByProductIdWithDetails()` có ~30 dòng JOIN + SELECT giống hệt nhau, chỉ khác WHERE clause (`orders.id` vs `orders.product_id`).
 
-💻 **Code hiện tại (trước khi sửa):**
+**Code hiện tại (trước khi sửa):**
 ```javascript
 export async function findByIdWithDetails(orderId) {
   return db('orders')
@@ -882,23 +882,23 @@ export async function findByProductIdWithDetails(productId) {
 
 ---
 
-### ❌ Tại sao đây là vấn đề:
+### Tại sao đây là vấn đề:
 - ~30 dòng JOIN + SELECT hoàn toàn giống nhau, chỉ khác 1 dòng WHERE
 - Thêm field mới vào select → phải sửa 2 nơi
 
-### 📊 PHÂN TÍCH TÁC ĐỘNG
+### PHÂN TÍCH TÁC ĐỘNG
 
-❌ **Khó bảo trì:** Sửa JOIN/SELECT phải sửa 2 chỗ  
-❌ **Khó mở rộng:** Thêm field → 2 nơi, dễ quên  
-❌ **Khó đọc hiểu:** Phải diff 2 hàm dài để thấy khác gì  
+**Khó bảo trì:** Sửa JOIN/SELECT phải sửa 2 chỗ  
+**Khó mở rộng:** Thêm field → 2 nơi, dễ quên  
+**Khó đọc hiểu:** Phải diff 2 hàm dài để thấy khác gì  
 
-💰 **Technical Debt Score: 7/10**
+**Technical Debt Score: 7/10**
 
 ---
 
-### ✅ ĐỀ XUẤT GIẢI PHÁP
+### ĐỀ XUẤT GIẢI PHÁP
 
-💻 **Code đề xuất:**
+**Code đề xuất:**
 ```javascript
 function findOrderWithDetails(whereClause) {
   return db('orders')
@@ -928,23 +928,23 @@ export async function findByProductIdWithDetails(productId) {
 }
 ```
 
-✅ **Lợi ích:** Từ 56 dòng → 26 dòng, 1 chỗ sửa SELECT/JOIN  
+**Lợi ích:** Từ 56 dòng → 26 dòng, 1 chỗ sửa SELECT/JOIN  
 
-📋 **Checklist implementation:**
+**Checklist implementation:**
 - [x] Tạo `findOrderWithDetails()` private function
 - [x] Refactor 2 hàm export
 - [x] Test cả 2 hàm
 
 ---
 
-## 📝 LỖI #10
+## LỖI #10
 
-📁 **File:** `src/utils/db.js`  
-📍 **Dòng:** 1-12 (bản gốc)  
-🚫 **Nguyên lý vi phạm:** DIP (Dependency Inversion Principle) + **BUG**  
-📋 **Mô tả vấn đề:** File kết nối database **hardcode** trực tiếp host, user, password thay vì đọc từ biến môi trường. Ngoài ra còn có **bug**: property `post: 5432` thay vì `port: 5432`.
+**File:** `src/utils/db.js`  
+**Dòng:** 1-12 (bản gốc)  
+**Nguyên lý vi phạm:** DIP (Dependency Inversion Principle) + **BUG**  
+**Mô tả vấn đề:** File kết nối database **hardcode** trực tiếp host, user, password thay vì đọc từ biến môi trường. Ngoài ra còn có **bug**: property `post: 5432` thay vì `port: 5432`.
 
-💻 **Code hiện tại (trước khi sửa):**
+**Code hiện tại (trước khi sửa):**
 ```javascript
 import knex from 'knex';
 export default knex({
@@ -962,38 +962,38 @@ export default knex({
 
 ---
 
-### ❌ Tại sao đây là vấn đề:
+### Tại sao đây là vấn đề:
 - **Hardcoded credentials** — password xuất hiện trực tiếp trong source code → bảo mật nghiêm trọng
 - **Bug `post` thay vì `port`** — knex sẽ dùng default port, may mắn vẫn hoạt động nhưng là bug tiềm ẩn
 - Không thể chuyển môi trường (dev → staging → production) mà không sửa code
 - Vi phạm DIP: module high-level phụ thuộc trực tiếp vào giá trị cụ thể thay vì abstraction (env vars)
 
-### 📊 PHÂN TÍCH TÁC ĐỘNG
+### PHÂN TÍCH TÁC ĐỘNG
 
-❌ **Khó bảo trì:**
+**Khó bảo trì:**
 - Đổi database → phải sửa source code, commit, deploy
 - Password lộ trong git history vĩnh viễn
 
-❌ **Khó mở rộng:**
+**Khó mở rộng:**
 - Không hỗ trợ multi-environment (dev/staging/prod)
 - Không thể dùng CI/CD secrets
 
-❌ **Khó test:**
+**Khó test:**
 - Không thể trỏ sang test database mà không sửa code
 
-❌ **Khó đọc hiểu:**
+**Khó đọc hiểu:**
 - Credentials nằm trong code — security review sẽ flag ngay
 
-💰 **Technical Debt Score: 9/10** (urgent — security + bug)
+**Technical Debt Score: 9/10** (urgent — security + bug)
 
 ---
 
-### ✅ ĐỀ XUẤT GIẢI PHÁP
+### ĐỀ XUẤT GIẢI PHÁP
 
-📝 **Mô tả giải pháp:**  
+**Mô tả giải pháp:**  
 Sử dụng `process.env` từ file `.env` (đã load bằng `dotenv` trong `index.js`). Sửa typo `post` → `port`.
 
-💻 **Code đề xuất:**
+**Code đề xuất:**
 ```javascript
 import knex from 'knex';
 
@@ -1010,16 +1010,16 @@ export default knex({
 });
 ```
 
-✅ **Lợi ích:**
+**Lợi ích:**
 - Credentials không còn trong source code
 - Hỗ trợ multi-environment qua `.env` files
 - Sửa bug `post` → `port`
 - Default values cho local development
 
-⚠️ **Trade-offs:**
+**Trade-offs:**
 - Phải tạo file `.env` — nhưng đã có hướng dẫn trong `readme.txt`
 
-📋 **Checklist implementation:**
+**Checklist implementation:**
 - [x] Sửa `post` → `port`
 - [x] Thay hardcoded values bằng `process.env`
 - [x] Thêm default values fallback
@@ -1028,14 +1028,14 @@ export default knex({
 
 ---
 
-## 📝 LỖI #11
+## LỖI #11
 
-📁 **File:** `src/models/review.model.js`  
-📍 **Dòng:** 89-119 (bản gốc)  
-🚫 **Nguyên lý vi phạm:** DRY (Don't Repeat Yourself)  
-📋 **Mô tả vấn đề:** Hàm `create()` và `createReview()` cùng insert vào bảng `reviews` với logic gần giống. `createReview` nhận object trực tiếp, `create` nhận object rồi map lại fields trước khi insert — nhưng kết quả cuối cùng giống nhau.
+**File:** `src/models/review.model.js`  
+**Dòng:** 89-119 (bản gốc)  
+**Nguyên lý vi phạm:** DRY (Don't Repeat Yourself)  
+**Mô tả vấn đề:** Hàm `create()` và `createReview()` cùng insert vào bảng `reviews` với logic gần giống. `createReview` nhận object trực tiếp, `create` nhận object rồi map lại fields trước khi insert — nhưng kết quả cuối cùng giống nhau.
 
-💻 **Code hiện tại (trước khi sửa):**
+**Code hiện tại (trước khi sửa):**
 ```javascript
 // Hàm 1: nhận reviewData trực tiếp
 export function createReview(reviewData) {
@@ -1057,27 +1057,27 @@ export function create(data) {
 
 ---
 
-### ❌ Tại sao đây là vấn đề:
+### Tại sao đây là vấn đề:
 - 2 hàm cùng insert vào `reviews` — nếu thêm required field, phải sửa 2 nơi
 - `create()` không gọi `.returning('*')` như `createReview()` — inconsistency
 - Caller phải chọn giữa 2 hàm, gây nhầm lẫn
 
-### 📊 PHÂN TÍCH TÁC ĐỘNG
+### PHÂN TÍCH TÁC ĐỘNG
 
-❌ **Khó bảo trì:** Thêm field → sửa 2 hàm  
-❌ **Khó mở rộng:** Return value khác nhau (1 hàm có `.returning('*')`, 1 không)  
-❌ **Khó đọc hiểu:** Tại sao có 2 hàm tạo review?  
+**Khó bảo trì:** Thêm field → sửa 2 hàm  
+**Khó mở rộng:** Return value khác nhau (1 hàm có `.returning('*')`, 1 không)  
+**Khó đọc hiểu:** Tại sao có 2 hàm tạo review?  
 
-💰 **Technical Debt Score: 5/10**
+**Technical Debt Score: 5/10**
 
 ---
 
-### ✅ ĐỀ XUẤT GIẢI PHÁP
+### ĐỀ XUẤT GIẢI PHÁP
 
-📝 **Mô tả giải pháp:**  
+**Mô tả giải pháp:**  
 `create()` gọi lại `createReview()` sau khi map fields — một entry point duy nhất cho insert logic.
 
-💻 **Code đề xuất:**
+**Code đề xuất:**
 ```javascript
 export function createReview(reviewData) {
     return db('reviews').insert(reviewData).returning('*');
@@ -1096,19 +1096,19 @@ export function create(data) {
 }
 ```
 
-✅ **Lợi ích:**
+**Lợi ích:**
 - Insert logic tập trung tại `createReview()` 
 - `create()` chỉ map fields, không duplicate DB logic
 - Consistent return value (đều có `.returning('*')`)
 
-📋 **Checklist implementation:**
+**Checklist implementation:**
 - [x] Refactor `create()` gọi `createReview()`
 - [x] Refactor `updateByReviewerAndProduct()` gọi `updateReview()`
 - [x] Test tạo review qua cả 2 hàm
 
 ---
 
-## 📊 TỔNG HỢP THAY ĐỔI ĐÃ THỰC HIỆN
+## TỔNG HỢP THAY ĐỔI ĐÃ THỰC HIỆN
 
 | # | File | Hành động | Nguyên lý |
 |---|------|-----------|-----------|
